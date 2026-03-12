@@ -56,7 +56,6 @@
       display: flex; flex-direction: column; align-items: center;
     }
 
-    /* ── Header ── */
     header {
       width: 100%; padding: 3rem 0 2.4rem;
       display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
@@ -69,7 +68,6 @@
     }
     .subtitle { font-family: 'Syne Mono', monospace; font-size: 0.7rem; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; }
 
-    /* ── Input card ── */
     .input-card {
       width: 100%; margin-top: 2.4rem;
       background: var(--surface); border: 1px solid var(--border);
@@ -118,26 +116,22 @@
     .error-msg.show { display: block; animation: shake 0.3s ease; }
     @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 
-    /* ── Player card ── */
+    /* ── Player ── */
     .player-wrap { width: 100%; margin-top: 1.8rem; animation: fadeUp 0.7s 0.2s ease both; }
-
     .player-shell {
       position: relative; border-radius: 14px; overflow: hidden;
-      background: #0d0d18; aspect-ratio: 16/9;
+      background: #000; aspect-ratio: 16/9;
       box-shadow: 0 0 0 1px var(--border), 0 40px 100px rgba(0,0,0,0.7), 0 0 80px rgba(91,63,255,0.08);
       transition: box-shadow 0.5s;
     }
-
-    /* Scanlines always present */
+    .player-shell iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
     .scanlines {
-      position: absolute; inset: 0; pointer-events: none; z-index: 3;
+      position: absolute; inset: 0; pointer-events: none; z-index: 2;
       background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px);
     }
-
-    /* Empty state */
     .empty {
       position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 1.2rem; z-index: 2;
+      align-items: center; justify-content: center; gap: 1.2rem; z-index: 1;
     }
     .empty-ring {
       width: 72px; height: 72px; border-radius: 50%;
@@ -148,58 +142,6 @@
     .empty-ring svg { opacity: 0.25; }
     .empty-text { font-family: 'Syne Mono', monospace; font-size: 0.68rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
 
-    /* Loaded state — thumbnail + open button */
-    .player-loaded {
-      display: none;
-      position: absolute; inset: 0; z-index: 2;
-      flex-direction: column; align-items: center; justify-content: center;
-    }
-    .player-loaded.show { display: flex; }
-
-    .player-bg {
-      position: absolute; inset: 0;
-      background-size: cover; background-position: center;
-      transition: transform 0.5s ease;
-    }
-    .player-bg-overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(to top, rgba(5,5,15,0.92) 0%, rgba(5,5,15,0.4) 50%, rgba(5,5,15,0.2) 100%);
-    }
-
-    .player-content {
-      position: relative; z-index: 1;
-      display: flex; flex-direction: column; align-items: center; gap: 1.4rem;
-      padding: 1.5rem;
-    }
-
-    .platform-logo {
-      font-family: 'Syne Mono', monospace; font-size: 0.65rem; letter-spacing: 0.18em;
-      text-transform: uppercase; padding: 0.25rem 0.8rem; border-radius: 100px;
-    }
-
-    .open-watch-btn {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 1rem 2rem; border-radius: 50px; border: none; cursor: pointer;
-      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.04em;
-      transition: transform 0.15s, box-shadow 0.2s, background 0.15s;
-      text-decoration: none; white-space: nowrap;
-    }
-    .open-watch-btn:hover { transform: scale(1.04); }
-    .open-watch-btn:active { transform: scale(0.97); }
-
-    .open-watch-btn .btn-icon {
-      width: 18px; height: 18px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.25); flex-shrink: 0;
-    }
-    .open-watch-btn .btn-icon svg { margin-left: 1px; }
-
-    .watch-note {
-      font-family: 'Syne Mono', monospace; font-size: 0.62rem;
-      letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.4;
-    }
-
-    /* Info strip */
     .info-strip {
       display: none; margin-top: 1rem; align-items: center; gap: 0.85rem;
       padding: 0.8rem 1.1rem; background: var(--surface); border: 1px solid var(--border);
@@ -211,7 +153,6 @@
     .orig-link { font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 600; color: var(--accent); text-decoration: none; letter-spacing: 0.06em; white-space: nowrap; opacity: 0.85; transition: opacity 0.15s; }
     .orig-link:hover { opacity: 1; }
 
-    /* ── How-to ── */
     .howto { width: 100%; margin-top: 3rem; animation: fadeUp 0.7s 0.3s ease both; }
     .howto-title { font-family: 'Syne Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
     .howto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
@@ -221,12 +162,11 @@
     .howto-desc { font-size: 0.75rem; color: var(--muted); line-height: 1.65; }
     .howto-desc code { font-family: 'Syne Mono', monospace; font-size: 0.68rem; color: #777; background: rgba(255,255,255,0.05); padding: 0.1rem 0.35rem; border-radius: 4px; }
 
-    /* ── Divider ── */
+    /* ── Feed ── */
     .section-divider { width: 100%; margin-top: 4rem; display: flex; align-items: center; gap: 1rem; }
     .divider-line { flex: 1; height: 1px; background: var(--border); }
     .divider-label { font-family: 'Syne Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 
-    /* ── Feed section ── */
     .feed-section { width: 100%; margin-top: 2.5rem; animation: fadeUp 0.7s 0.35s ease both; }
     .feed-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.4rem; flex-wrap: wrap; gap: 0.75rem; }
     .feed-title-group { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -239,14 +179,11 @@
       padding: 0.85rem 1rem; backdrop-filter: blur(10px); transition: box-shadow 0.3s;
     }
     .feed-add-bar:focus-within { box-shadow: 0 0 0 2px rgba(200,255,87,0.25); border-color: rgba(200,255,87,0.3); }
-
     .feed-type-toggle { display: flex; gap: 0.3rem; background: rgba(255,255,255,0.04); border-radius: 7px; padding: 3px; flex-shrink: 0; }
     .toggle-btn { font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.07em; padding: 0.3rem 0.65rem; border-radius: 5px; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap; }
     .toggle-btn.active { background: rgba(255,255,255,0.1); color: var(--text); }
-
     .feed-url-input { flex: 1; min-width: 0; background: transparent; border: none; color: var(--text); font-family: 'Syne Mono', monospace; font-size: 0.78rem; outline: none; }
     .feed-url-input::placeholder { color: var(--muted); }
-
     .feed-add-btn { display: flex; align-items: center; gap: 0.4rem; background: rgba(200,255,87,0.1); border: 1px solid rgba(200,255,87,0.25); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1rem; border-radius: 7px; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: background 0.15s, box-shadow 0.2s; }
     .feed-add-btn:hover { background: rgba(200,255,87,0.18); box-shadow: 0 0 20px rgba(200,255,87,0.15); }
 
@@ -254,36 +191,15 @@
     .feed-error.show { display: block; }
 
     .feed-viewport { position: relative; width: 100%; height: 82vh; max-height: 700px; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset, 0 40px 80px rgba(0,0,0,0.6); background: #000; }
-
     .feed-track { width: 100%; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
     .feed-track::-webkit-scrollbar { display: none; }
+    .feed-slide { scroll-snap-align: start; position: relative; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+    .feed-slide iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
 
-    .feed-slide { scroll-snap-align: start; position: relative; width: 100%; height: 100%; background: #0d0d18; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
-
-    /* Slide bg + overlay */
-    .slide-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform 0.5s ease; }
-    .slide-bg-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5,5,15,0.92) 0%, rgba(5,5,15,0.35) 60%, rgba(5,5,15,0.15) 100%); }
-
-    /* Slide open button */
-    .slide-open-btn {
-      position: relative; z-index: 4;
-      display: flex; align-items: center; gap: 0.7rem;
-      padding: 0.9rem 1.8rem; border-radius: 50px; border: none; cursor: pointer;
-      font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em;
-      text-decoration: none; transition: transform 0.15s, box-shadow 0.2s;
-    }
-    .slide-open-btn:hover { transform: scale(1.05); }
-    .slide-open-btn:active { transform: scale(0.97); }
-    .slide-open-btn .btn-icon { width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .slide-open-btn .btn-icon svg { margin-left: 1px; }
-
-    .slide-meta { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem 1.2rem 1.2rem; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%); display: flex; align-items: flex-end; justify-content: space-between; z-index: 10; }
-    .slide-badge { font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; padding: 0.2rem 0.6rem; border-radius: 100px; }
-    .slide-remove { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s; line-height: 1; }
+    .slide-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem 1.2rem 1.2rem; background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%); display: flex; align-items: flex-end; justify-content: space-between; z-index: 10; pointer-events: none; }
+    .slide-badge { font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; padding: 0.2rem 0.6rem; border-radius: 100px; pointer-events: none; }
+    .slide-remove { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: all; transition: background 0.15s, color 0.15s; line-height: 1; }
     .slide-remove:hover { background: rgba(255,69,69,0.3); color: #fff; border-color: rgba(255,69,69,0.4); }
-
-    /* Hover reveal on slide */
-    .feed-slide:hover .slide-bg { transform: scale(1.03); }
 
     .feed-nav { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 0.5rem; z-index: 20; }
     .nav-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.1s; line-height: 1; }
@@ -294,7 +210,6 @@
     .feed-dots { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 5px; z-index: 20; }
     .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: background 0.2s, transform 0.2s; cursor: pointer; }
     .dot.active { background: var(--accent); transform: scale(1.4); }
-
     .feed-counter { position: absolute; top: 1rem; right: 1rem; font-family: 'Syne Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); z-index: 20; pointer-events: none; }
 
     .feed-empty { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; color: var(--muted); }
@@ -329,7 +244,6 @@
     <div class="subtitle">Social Video Player</div>
   </header>
 
-  <!-- Input -->
   <div class="input-card">
     <div class="input-row">
       <input class="url-input" id="urlInput" type="text"
@@ -337,7 +251,7 @@
         autocomplete="off" spellcheck="false" />
       <button class="play-btn" onclick="loadVideo()">
         <svg class="play-icon" viewBox="0 0 16 16"><polygon points="3,1 15,8 3,15"/></svg>
-        Load
+        Play
       </button>
     </div>
     <div class="pills">
@@ -352,12 +266,9 @@
 
   <div class="error-msg" id="errorMsg"></div>
 
-  <!-- Player -->
   <div class="player-wrap">
     <div class="player-shell" id="playerShell">
       <div class="scanlines"></div>
-
-      <!-- Empty -->
       <div class="empty" id="emptyState">
         <div class="empty-ring">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.3">
@@ -365,22 +276,6 @@
           </svg>
         </div>
         <span class="empty-text">Paste a link above</span>
-      </div>
-
-      <!-- Loaded -->
-      <div class="player-loaded" id="playerLoaded">
-        <div class="player-bg" id="playerBg"></div>
-        <div class="player-bg-overlay"></div>
-        <div class="player-content">
-          <span class="platform-logo" id="playerPlatformLogo"></span>
-          <a class="open-watch-btn" id="openWatchBtn" href="#" target="_blank" rel="noopener">
-            <div class="btn-icon">
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="white"><polygon points="3,1 15,8 3,15"/></svg>
-            </div>
-            <span id="watchBtnLabel">Watch on YouTube</span>
-          </a>
-          <span class="watch-note">Opens in a new tab — no restrictions</span>
-        </div>
       </div>
     </div>
 
@@ -391,7 +286,6 @@
     </div>
   </div>
 
-  <!-- Supported formats -->
   <div class="howto">
     <div class="howto-title">// Supported Formats</div>
     <div class="howto-grid">
@@ -414,19 +308,17 @@
     </div>
   </div>
 
-  <!-- Divider -->
   <div class="section-divider">
     <div class="divider-line"></div>
     <div class="divider-label">Short-Form Feed</div>
     <div class="divider-line"></div>
   </div>
 
-  <!-- Feed -->
   <div class="feed-section">
     <div class="feed-header">
       <div class="feed-title-group">
         <div class="feed-title">Shorts &amp; TikToks</div>
-        <div class="feed-subtitle">// Scroll your queue · click to open</div>
+        <div class="feed-subtitle">// Scroll your queue</div>
       </div>
     </div>
 
@@ -468,294 +360,253 @@
 </div>
 
 <script>
-/* ── Platform config ── */
-const PLATFORMS = {
-  YouTube:     { color: '#ff7878', bg: 'rgba(255,69,69,0.12)',   border: 'rgba(255,69,69,0.3)',   btnBg: '#ff4444', btnShadow: 'rgba(255,60,60,0.4)',   label: 'Watch on YouTube' },
-  'YT Short':  { color: '#ff7878', bg: 'rgba(255,69,69,0.12)',   border: 'rgba(255,69,69,0.3)',   btnBg: '#ff4444', btnShadow: 'rgba(255,60,60,0.4)',   label: 'Watch on YouTube' },
-  Vimeo:       { color: '#74acff', bg: 'rgba(69,145,255,0.12)',  border: 'rgba(69,145,255,0.3)',  btnBg: '#1ab7ea', btnShadow: 'rgba(26,183,234,0.4)',  label: 'Watch on Vimeo' },
-  Dailymotion: { color: '#7dffb0', bg: 'rgba(85,255,136,0.1)',   border: 'rgba(85,255,136,0.25)', btnBg: '#0066dc', btnShadow: 'rgba(0,102,220,0.4)',   label: 'Watch on Dailymotion' },
-  Twitch:      { color: '#bb8cff', bg: 'rgba(155,89,255,0.12)',  border: 'rgba(155,89,255,0.3)',  btnBg: '#9146ff', btnShadow: 'rgba(145,70,255,0.4)',  label: 'Watch on Twitch' },
-  Facebook:    { color: '#8bbcff', bg: 'rgba(69,145,255,0.1)',   border: 'rgba(69,145,255,0.25)', btnBg: '#1877f2', btnShadow: 'rgba(24,119,242,0.4)',  label: 'Watch on Facebook' },
-  TikTok:      { color: '#ff6b9d', bg: 'rgba(255,107,157,0.12)', border: 'rgba(255,107,157,0.3)', btnBg: '#010101', btnShadow: 'rgba(255,107,157,0.35)', label: 'Watch on TikTok' },
-};
+  const palette = {
+    YouTube:     { color: '#ff7878', bg: 'rgba(255,69,69,0.12)',   border: 'rgba(255,69,69,0.3)' },
+    'YT Short':  { color: '#ff7878', bg: 'rgba(255,69,69,0.12)',   border: 'rgba(255,69,69,0.3)' },
+    Vimeo:       { color: '#74acff', bg: 'rgba(69,145,255,0.12)',  border: 'rgba(69,145,255,0.3)' },
+    Dailymotion: { color: '#7dffb0', bg: 'rgba(85,255,136,0.1)',   border: 'rgba(85,255,136,0.25)' },
+    Twitch:      { color: '#bb8cff', bg: 'rgba(155,89,255,0.12)',  border: 'rgba(155,89,255,0.3)' },
+    Facebook:    { color: '#8bbcff', bg: 'rgba(69,145,255,0.1)',   border: 'rgba(69,145,255,0.25)' },
+    TikTok:      { color: '#ff6b9d', bg: 'rgba(255,107,157,0.12)', border: 'rgba(255,107,157,0.3)' },
+  };
 
-function ytThumb(id) { return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`; }
-
-/* ── Parse main URL ── */
-function parseMainUrl(raw) {
-  raw = raw.trim();
-  if (!raw) return null;
-  try {
-    const url = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
-    const host = url.hostname.replace('www.', '');
-
-    if (host === 'youtube.com' || host === 'm.youtube.com') {
-      const s = url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
-      if (s) return { platform: 'YouTube', thumb: ytThumb(s[1]), watchUrl: `https://www.youtube.com/shorts/${s[1]}` };
-      const v = url.searchParams.get('v');
-      if (v) return { platform: 'YouTube', thumb: ytThumb(v), watchUrl: `https://www.youtube.com/watch?v=${v}` };
-    }
-    if (host === 'youtu.be') {
-      const id = url.pathname.slice(1).split('?')[0];
-      if (id) return { platform: 'YouTube', thumb: ytThumb(id), watchUrl: `https://www.youtube.com/watch?v=${id}` };
-    }
-    if (host === 'vimeo.com' || host === 'player.vimeo.com') {
-      const m = url.pathname.match(/\/(\d+)/);
-      if (m) return { platform: 'Vimeo', thumb: null, watchUrl: `https://vimeo.com/${m[1]}` };
-    }
-    if (host === 'dailymotion.com' || host === 'dai.ly') {
-      let id; const m = url.pathname.match(/\/video\/([a-zA-Z0-9]+)/);
-      if (m) id = m[1]; else if (host === 'dai.ly') id = url.pathname.slice(1).split('_')[0];
-      if (id) return { platform: 'Dailymotion', thumb: `https://www.dailymotion.com/thumbnail/video/${id}`, watchUrl: `https://www.dailymotion.com/video/${id}` };
-    }
-    if (host === 'clips.twitch.tv') {
-      const slug = url.pathname.slice(1);
-      if (slug) return { platform: 'Twitch', thumb: null, watchUrl: raw };
-    }
-    if (host === 'twitch.tv') {
-      return { platform: 'Twitch', thumb: null, watchUrl: raw };
-    }
-    if (host === 'facebook.com' || host === 'fb.watch') {
-      return { platform: 'Facebook', thumb: null, watchUrl: raw };
-    }
-    return null;
-  } catch { return null; }
-}
-
-/* ── Main player ── */
-const urlInput      = document.getElementById('urlInput');
-const emptyState    = document.getElementById('emptyState');
-const playerLoaded  = document.getElementById('playerLoaded');
-const playerBg      = document.getElementById('playerBg');
-const playerPlatLogo= document.getElementById('playerPlatformLogo');
-const openWatchBtn  = document.getElementById('openWatchBtn');
-const watchBtnLabel = document.getElementById('watchBtnLabel');
-const errorMsg      = document.getElementById('errorMsg');
-const infoStrip     = document.getElementById('infoStrip');
-const platformTag   = document.getElementById('platformTag');
-const stripUrl      = document.getElementById('stripUrl');
-const origLink      = document.getElementById('origLink');
-const playerShell   = document.getElementById('playerShell');
-
-urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadVideo(); });
-
-function loadVideo() {
-  errorMsg.classList.remove('show');
-  const raw = urlInput.value.trim();
-  if (!raw) { showMainError('Drop a video link in the field above.'); return; }
-
-  const result = parseMainUrl(raw);
-  if (!result) { showMainError("Couldn't recognise that URL. Try YouTube, Vimeo, Dailymotion, or Twitch."); return; }
-
-  const p = PLATFORMS[result.platform] || { color: '#aaa', bg: 'rgba(255,255,255,0.07)', border: 'rgba(255,255,255,0.2)', btnBg: '#555', btnShadow: 'rgba(0,0,0,0.3)', label: 'Watch Video' };
-
-  /* Thumbnail */
-  if (result.thumb) {
-    playerBg.style.backgroundImage = `url(${result.thumb})`;
-  } else {
-    playerBg.style.backgroundImage = `radial-gradient(ellipse at 30% 40%, ${p.color}33 0%, transparent 65%), linear-gradient(135deg, #111 0%, #050510 100%)`;
+  function parseMainUrl(raw) {
+    raw = raw.trim();
+    if (!raw) return null;
+    try {
+      const url = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
+      const host = url.hostname.replace('www.', '');
+      if (host === 'youtube.com' || host === 'm.youtube.com') {
+        const s = url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
+        if (s) return { platform: 'YouTube', embedUrl: `https://www.youtube-nocookie.com/embed/${s[1]}?autoplay=1&rel=0` };
+        const v = url.searchParams.get('v');
+        if (v) return { platform: 'YouTube', embedUrl: `https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0` };
+      }
+      if (host === 'youtu.be') {
+        const id = url.pathname.slice(1).split('?')[0];
+        if (id) return { platform: 'YouTube', embedUrl: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0` };
+      }
+      if (host === 'vimeo.com' || host === 'player.vimeo.com') {
+        const m = url.pathname.match(/\/(\d+)/);
+        if (m) return { platform: 'Vimeo', embedUrl: `https://player.vimeo.com/video/${m[1]}?autoplay=1` };
+      }
+      if (host === 'dailymotion.com' || host === 'dai.ly') {
+        let id; const m = url.pathname.match(/\/video\/([a-zA-Z0-9]+)/);
+        if (m) id = m[1]; else if (host === 'dai.ly') id = url.pathname.slice(1).split('_')[0];
+        if (id) return { platform: 'Dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${id}?autoplay=1` };
+      }
+      if (host === 'clips.twitch.tv') {
+        const slug = url.pathname.slice(1);
+        if (slug) return { platform: 'Twitch', embedUrl: `https://clips.twitch.tv/embed?clip=${slug}&parent=jtoon711.github.io&autoplay=true` };
+      }
+      if (host === 'twitch.tv') {
+        const vod = url.pathname.match(/\/videos\/(\d+)/);
+        if (vod) return { platform: 'Twitch', embedUrl: `https://player.twitch.tv/?video=${vod[1]}&parent=jtoon711.github.io&autoplay=true` };
+        const clip = url.pathname.match(/\/clip\/([A-Za-z0-9_-]+)/);
+        if (clip) return { platform: 'Twitch', embedUrl: `https://clips.twitch.tv/embed?clip=${clip[1]}&parent=jtoon711.github.io&autoplay=true` };
+      }
+      if (host === 'facebook.com' || host === 'fb.watch') {
+        return { platform: 'Facebook', embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(raw)}&show_text=false&autoplay=true` };
+      }
+      return null;
+    } catch { return null; }
   }
 
-  /* Platform pill */
-  playerPlatLogo.textContent = result.platform.toUpperCase();
-  playerPlatLogo.style.cssText = `background:${p.bg};border:1px solid ${p.border};color:${p.color};font-family:'Syne Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:0.22rem 0.7rem;border-radius:100px;`;
+  const urlInput    = document.getElementById('urlInput');
+  const playerShell = document.getElementById('playerShell');
+  const emptyState  = document.getElementById('emptyState');
+  const errorMsg    = document.getElementById('errorMsg');
+  const infoStrip   = document.getElementById('infoStrip');
+  const platformTag = document.getElementById('platformTag');
+  const stripUrl    = document.getElementById('stripUrl');
+  const origLink    = document.getElementById('origLink');
 
-  /* Watch button */
-  openWatchBtn.href = result.watchUrl;
-  watchBtnLabel.textContent = p.label;
-  openWatchBtn.style.cssText = `background:${p.btnBg};color:#fff;box-shadow:0 4px 30px ${p.btnShadow};display:flex;align-items:center;gap:0.75rem;padding:1rem 2rem;border-radius:50px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;letter-spacing:0.04em;text-decoration:none;transition:transform 0.15s,box-shadow 0.2s;`;
+  urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadVideo(); });
 
-  emptyState.style.display = 'none';
-  playerLoaded.classList.add('show');
+  function loadVideo() {
+    errorMsg.classList.remove('show');
+    const raw = urlInput.value.trim();
+    if (!raw) { showMainError('Drop a video link in the field above.'); return; }
+    const result = parseMainUrl(raw);
+    if (!result) { showMainError("Couldn't recognise that URL. Try YouTube, Vimeo, Dailymotion, or Twitch."); return; }
 
-  /* Info strip */
-  platformTag.textContent = result.platform;
-  platformTag.style.cssText = `background:${p.bg};border:1px solid ${p.border};color:${p.color};font-family:'Syne Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:0.22rem 0.7rem;border-radius:100px;white-space:nowrap;`;
-  stripUrl.textContent = raw;
-  origLink.href = raw;
-  infoStrip.classList.add('show');
-  playerShell.style.boxShadow = `0 0 0 1px rgba(255,255,255,0.08), 0 40px 100px rgba(0,0,0,0.7), 0 0 60px ${p.color}22`;
-}
+    playerShell.querySelectorAll('iframe').forEach(el => el.remove());
+    emptyState.style.display = 'none';
 
-function showMainError(msg) {
-  errorMsg.textContent = '⚠  ' + msg;
-  errorMsg.classList.remove('show'); void errorMsg.offsetWidth; errorMsg.classList.add('show');
-}
+    const iframe = document.createElement('iframe');
+    iframe.src = result.embedUrl;
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.allowFullscreen = true;
+    playerShell.appendChild(iframe);
 
-/* ── Feed ── */
-const feedTrack    = document.getElementById('feedTrack');
-const feedEmpty    = document.getElementById('feedEmpty');
-const feedDots     = document.getElementById('feedDots');
-const feedCounter  = document.getElementById('feedCounter');
-const feedUrlInput = document.getElementById('feedUrlInput');
-const feedErrorEl  = document.getElementById('feedError');
-const navUp        = document.getElementById('navUp');
-const navDown      = document.getElementById('navDown');
-
-let feedItems = [];
-let currentIndex = 0;
-let feedType = 'yt';
-
-feedUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') addToFeed(); });
-
-function setFeedType(type) {
-  feedType = type;
-  document.getElementById('toggleYT').classList.toggle('active', type === 'yt');
-  document.getElementById('toggleTT').classList.toggle('active', type === 'tt');
-  feedUrlInput.placeholder = type === 'yt' ? 'Paste a YouTube Shorts link…' : 'Paste a TikTok video link…';
-}
-
-function parseFeedUrl(raw) {
-  raw = raw.trim();
-  if (!raw) return null;
-  try {
-    const url = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
-    const host = url.hostname.replace('www.', '');
-
-    if (host === 'youtube.com' || host === 'm.youtube.com') {
-      const s = url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
-      if (s) return { platform: 'YT Short', thumb: ytThumb(s[1]), watchUrl: `https://www.youtube.com/shorts/${s[1]}`, originalUrl: raw };
-      const v = url.searchParams.get('v');
-      if (v) return { platform: 'YouTube', thumb: ytThumb(v), watchUrl: `https://www.youtube.com/watch?v=${v}`, originalUrl: raw };
-    }
-    if (host === 'youtu.be') {
-      const id = url.pathname.slice(1).split('?')[0];
-      if (id) return { platform: 'YT Short', thumb: ytThumb(id), watchUrl: `https://www.youtube.com/watch?v=${id}`, originalUrl: raw };
-    }
-    if (host === 'tiktok.com' || host === 'vm.tiktok.com' || host === 'vt.tiktok.com') {
-      return { platform: 'TikTok', thumb: null, watchUrl: raw, originalUrl: raw };
-    }
-    return null;
-  } catch { return null; }
-}
-
-function addToFeed() {
-  feedErrorEl.classList.remove('show');
-  const raw = feedUrlInput.value.trim();
-  if (!raw) { showFeedError('Paste a link first.'); return; }
-  const result = parseFeedUrl(raw);
-  if (!result) { showFeedError('Only YouTube Shorts and TikTok links are supported in the feed.'); return; }
-  feedItems.push(result);
-  feedUrlInput.value = '';
-  renderFeed();
-  setTimeout(() => goToSlide(feedItems.length - 1), 60);
-}
-
-function removeFromFeed(index) {
-  feedItems.splice(index, 1);
-  currentIndex = Math.min(currentIndex, Math.max(0, feedItems.length - 1));
-  renderFeed();
-  if (feedItems.length > 0) goToSlide(currentIndex);
-}
-
-function renderFeed() {
-  feedTrack.querySelectorAll('.feed-slide').forEach(el => el.remove());
-
-  if (feedItems.length === 0) {
-    feedEmpty.style.display = 'flex';
-    feedDots.innerHTML = ''; feedCounter.textContent = '';
-    updateNavBtns(); return;
+    const p = palette[result.platform] || { color: '#aaa', bg: 'rgba(255,255,255,0.07)', border: 'rgba(255,255,255,0.2)' };
+    platformTag.textContent = result.platform;
+    platformTag.style.cssText = `background:${p.bg};border:1px solid ${p.border};color:${p.color};font-family:'Syne Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:0.22rem 0.7rem;border-radius:100px;white-space:nowrap;`;
+    stripUrl.textContent = raw;
+    origLink.href = raw;
+    infoStrip.classList.add('show');
+    playerShell.style.boxShadow = `0 0 0 1px rgba(255,255,255,0.08), 0 40px 100px rgba(0,0,0,0.7), 0 0 60px ${p.color}22`;
   }
 
-  feedEmpty.style.display = 'none';
+  function showMainError(msg) {
+    errorMsg.textContent = '⚠  ' + msg;
+    errorMsg.classList.remove('show'); void errorMsg.offsetWidth; errorMsg.classList.add('show');
+  }
 
-  feedItems.forEach((item, i) => {
-    const p = PLATFORMS[item.platform] || PLATFORMS['YouTube'];
-    const slide = document.createElement('div');
-    slide.className = 'feed-slide';
+  /* ── Feed ── */
+  const feedTrack    = document.getElementById('feedTrack');
+  const feedEmpty    = document.getElementById('feedEmpty');
+  const feedDots     = document.getElementById('feedDots');
+  const feedCounter  = document.getElementById('feedCounter');
+  const feedUrlInput = document.getElementById('feedUrlInput');
+  const feedErrorEl  = document.getElementById('feedError');
+  const navUp        = document.getElementById('navUp');
+  const navDown      = document.getElementById('navDown');
 
-    /* Background */
-    const bg = document.createElement('div');
-    bg.className = 'slide-bg';
-    bg.style.backgroundImage = item.thumb
-      ? `url(${item.thumb})`
-      : `radial-gradient(ellipse at 30% 40%, ${p.color}33 0%, transparent 65%), linear-gradient(135deg, #111 0%, #050510 100%)`;
-    slide.appendChild(bg);
+  let feedItems = [], currentIndex = 0, feedType = 'yt';
 
-    const bgOverlay = document.createElement('div');
-    bgOverlay.className = 'slide-bg-overlay';
-    slide.appendChild(bgOverlay);
+  feedUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') addToFeed(); });
 
-    /* Open button */
-    const btn = document.createElement('a');
-    btn.className = 'slide-open-btn';
-    btn.href = item.watchUrl;
-    btn.target = '_blank';
-    btn.rel = 'noopener';
-    btn.style.cssText = `background:${p.btnBg};color:#fff;box-shadow:0 4px 24px ${p.btnShadow};`;
-    btn.innerHTML = `
-      <div class="btn-icon">
-        <svg width="9" height="9" viewBox="0 0 16 16" fill="white"><polygon points="3,1 15,8 3,15"/></svg>
-      </div>
-      ${p.label}`;
-    slide.appendChild(btn);
+  function setFeedType(type) {
+    feedType = type;
+    document.getElementById('toggleYT').classList.toggle('active', type === 'yt');
+    document.getElementById('toggleTT').classList.toggle('active', type === 'tt');
+    feedUrlInput.placeholder = type === 'yt' ? 'Paste a YouTube Shorts link…' : 'Paste a TikTok video link…';
+  }
 
-    /* Bottom meta */
-    const meta = document.createElement('div');
-    meta.className = 'slide-meta';
-    meta.innerHTML = `
-      <span class="slide-badge" style="background:${p.bg};border:1px solid ${p.border};color:${p.color};">${item.platform}</span>
-      <button class="slide-remove" onclick="event.stopPropagation();removeFromFeed(${i})">✕</button>`;
-    slide.appendChild(meta);
+  function parseFeedUrl(raw) {
+    raw = raw.trim();
+    if (!raw) return null;
+    try {
+      const url = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
+      const host = url.hostname.replace('www.', '');
+      if (host === 'youtube.com' || host === 'm.youtube.com') {
+        const s = url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
+        if (s) return { platform: 'YT Short', color: '#ff7878', colorBg: 'rgba(255,69,69,0.15)', colorBorder: 'rgba(255,69,69,0.35)', embedUrl: `https://www.youtube-nocookie.com/embed/${s[1]}?autoplay=1&rel=0`, originalUrl: raw };
+        const v = url.searchParams.get('v');
+        if (v) return { platform: 'YouTube', color: '#ff7878', colorBg: 'rgba(255,69,69,0.15)', colorBorder: 'rgba(255,69,69,0.35)', embedUrl: `https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0`, originalUrl: raw };
+      }
+      if (host === 'youtu.be') {
+        const id = url.pathname.slice(1).split('?')[0];
+        if (id) return { platform: 'YT Short', color: '#ff7878', colorBg: 'rgba(255,69,69,0.15)', colorBorder: 'rgba(255,69,69,0.35)', embedUrl: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`, originalUrl: raw };
+      }
+      if (host === 'tiktok.com' || host === 'vm.tiktok.com') {
+        const m = url.pathname.match(/\/video\/(\d+)/);
+        if (m) return { platform: 'TikTok', color: '#ff6b9d', colorBg: 'rgba(255,107,157,0.15)', colorBorder: 'rgba(255,107,157,0.35)', embedUrl: `https://www.tiktok.com/embed/v2/${m[1]}`, originalUrl: raw };
+        return { platform: 'TikTok', color: '#ff6b9d', colorBg: 'rgba(255,107,157,0.15)', colorBorder: 'rgba(255,107,157,0.35)', embedUrl: null, originalUrl: raw, isShortLink: true };
+      }
+      return null;
+    } catch { return null; }
+  }
 
-    feedTrack.appendChild(slide);
-  });
+  function addToFeed() {
+    feedErrorEl.classList.remove('show');
+    const raw = feedUrlInput.value.trim();
+    if (!raw) { showFeedError('Paste a link first.'); return; }
+    const result = parseFeedUrl(raw);
+    if (!result) { showFeedError('Only YouTube Shorts and TikTok links are supported in the feed.'); return; }
+    feedItems.push(result);
+    feedUrlInput.value = '';
+    renderFeed();
+    setTimeout(() => goToSlide(feedItems.length - 1), 60);
+  }
 
-  /* Dots */
-  feedDots.innerHTML = '';
-  feedItems.forEach((_, i) => {
-    const dot = document.createElement('div');
-    dot.className = 'dot' + (i === currentIndex ? ' active' : '');
-    dot.onclick = () => goToSlide(i);
-    feedDots.appendChild(dot);
-  });
+  function removeFromFeed(index) {
+    feedItems.splice(index, 1);
+    currentIndex = Math.min(currentIndex, Math.max(0, feedItems.length - 1));
+    renderFeed();
+    if (feedItems.length > 0) goToSlide(currentIndex);
+  }
 
-  updateCounter(); updateNavBtns();
-}
+  function renderFeed() {
+    feedTrack.querySelectorAll('.feed-slide').forEach(el => el.remove());
+    if (feedItems.length === 0) {
+      feedEmpty.style.display = 'flex';
+      feedDots.innerHTML = ''; feedCounter.textContent = '';
+      updateNavBtns(); return;
+    }
+    feedEmpty.style.display = 'none';
 
-function goToSlide(index) {
-  if (!feedItems.length) return;
-  index = Math.max(0, Math.min(index, feedItems.length - 1));
-  currentIndex = index;
-  const slides = feedTrack.querySelectorAll('.feed-slide');
-  if (slides[index]) slides[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
-  feedDots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === index));
-  updateCounter(); updateNavBtns();
-}
+    feedItems.forEach((item, i) => {
+      const slide = document.createElement('div');
+      slide.className = 'feed-slide';
 
-function scrollFeed(dir) { goToSlide(currentIndex + dir); }
+      if (item.isShortLink) {
+        slide.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;padding:2rem;text-align:center;position:relative;z-index:4;">
+          <div style="font-family:'Syne Mono',monospace;font-size:0.75rem;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;">TikTok Short Link</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.25);max-width:260px;line-height:1.7;font-family:'Syne Mono',monospace;">Use the full TikTok URL:<br>tiktok.com/@user/video/…</div>
+          <a href="${item.originalUrl}" target="_blank" rel="noopener" style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;color:#ff6b9d;text-decoration:none;padding:0.6rem 1.2rem;border:1px solid rgba(255,107,157,0.3);border-radius:8px;background:rgba(255,107,157,0.08);">Open on TikTok ↗</a>
+        </div>`;
+      } else {
+        const iframe = document.createElement('iframe');
+        iframe.src = item.embedUrl;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.allowFullscreen = true;
+        slide.appendChild(iframe);
+      }
 
-function updateNavBtns() {
-  navUp.disabled   = currentIndex <= 0 || !feedItems.length;
-  navDown.disabled = currentIndex >= feedItems.length - 1 || !feedItems.length;
-}
+      const overlay = document.createElement('div');
+      overlay.className = 'slide-overlay';
+      overlay.innerHTML = `
+        <span class="slide-badge" style="background:${item.colorBg};border:1px solid ${item.colorBorder};color:${item.color};">${item.platform}</span>
+        <button class="slide-remove" onclick="event.stopPropagation();removeFromFeed(${i})">✕</button>`;
+      slide.appendChild(overlay);
+      feedTrack.appendChild(slide);
+    });
 
-function updateCounter() {
-  feedCounter.textContent = feedItems.length ? `${currentIndex + 1} / ${feedItems.length}` : '';
-}
-
-feedTrack.addEventListener('scroll', () => {
-  const slides = feedTrack.querySelectorAll('.feed-slide');
-  if (!slides.length) return;
-  const trackTop = feedTrack.getBoundingClientRect().top;
-  let closest = 0, minDist = Infinity;
-  slides.forEach((s, i) => {
-    const d = Math.abs(s.getBoundingClientRect().top - trackTop);
-    if (d < minDist) { minDist = d; closest = i; }
-  });
-  if (closest !== currentIndex) {
-    currentIndex = closest;
-    feedDots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === closest));
+    feedDots.innerHTML = '';
+    feedItems.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === currentIndex ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      feedDots.appendChild(dot);
+    });
     updateCounter(); updateNavBtns();
   }
-}, { passive: true });
 
-function showFeedError(msg) {
-  feedErrorEl.textContent = '⚠  ' + msg;
-  feedErrorEl.classList.remove('show'); void feedErrorEl.offsetWidth; feedErrorEl.classList.add('show');
-}
+  function goToSlide(index) {
+    if (!feedItems.length) return;
+    index = Math.max(0, Math.min(index, feedItems.length - 1));
+    currentIndex = index;
+    const slides = feedTrack.querySelectorAll('.feed-slide');
+    if (slides[index]) slides[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    feedDots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === index));
+    updateCounter(); updateNavBtns();
+  }
 
-renderFeed();
+  function scrollFeed(dir) { goToSlide(currentIndex + dir); }
+
+  function updateNavBtns() {
+    navUp.disabled   = currentIndex <= 0 || !feedItems.length;
+    navDown.disabled = currentIndex >= feedItems.length - 1 || !feedItems.length;
+  }
+
+  function updateCounter() {
+    feedCounter.textContent = feedItems.length ? `${currentIndex + 1} / ${feedItems.length}` : '';
+  }
+
+  feedTrack.addEventListener('scroll', () => {
+    const slides = feedTrack.querySelectorAll('.feed-slide');
+    if (!slides.length) return;
+    const trackTop = feedTrack.getBoundingClientRect().top;
+    let closest = 0, minDist = Infinity;
+    slides.forEach((s, i) => {
+      const d = Math.abs(s.getBoundingClientRect().top - trackTop);
+      if (d < minDist) { minDist = d; closest = i; }
+    });
+    if (closest !== currentIndex) {
+      currentIndex = closest;
+      feedDots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === closest));
+      updateCounter(); updateNavBtns();
+    }
+  }, { passive: true });
+
+  function showFeedError(msg) {
+    feedErrorEl.textContent = '⚠  ' + msg;
+    feedErrorEl.classList.remove('show'); void feedErrorEl.offsetWidth; feedErrorEl.classList.add('show');
+  }
+
+  renderFeed();
 </script>
 </body>
 </html>
