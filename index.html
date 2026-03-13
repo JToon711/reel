@@ -884,47 +884,62 @@ async function importFromChannel() {
   if (!channelId && !handle) { showRssMsg('Could not recognise that channel URL.', 'error'); return; }
 
   btn.disabled = true;
-  showRssMsg('Fetching channel feed\u2026', 'loading');
+  showRssMsg('Fetching channel feed…', 'loading');
+
+  async function tryProxy(url) {
+    const proxies = [
+      'https://corsproxy.io/?' + encodeURIComponent(url),
+      'https://api.allorigins.win/get?url=' + encodeURIComponent(url),
+      'https://thingproxy.freeboard.io/fetch/' + url,
+      'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
+    ];
+    for (const p of proxies) {
+      try {
+        const r = await fetch(p, {signal: AbortSignal.timeout(8000)});
+        if (!r.ok) continue;
+        const text = await r.text();
+        if (text.startsWith('{')) {
+          try { const j = JSON.parse(text); if (j.contents) return j.contents; } catch {}
+        }
+        if (text.includes('<')) return text;
+      } catch { continue; }
+    }
+    return null;
+  }
 
   try {
     let xml = null;
 
-    async function fetchFeed(feedUrl) {
-      const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl);
-      const r = await fetch(proxy);
-      const d = await r.json();
-      return d.contents;
-    }
-
+    // Try direct channel ID feed first
     if (channelId) {
-      xml = await fetchFeed('https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId);
+      xml = await tryProxy('https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId);
     }
 
-    if (!xml || !xml.includes('<entry>')) {
-      if (handle) {
-        xml = await fetchFeed('https://www.youtube.com/feeds/videos.xml?user=' + handle);
-      }
+    // Try user-based feed
+    if ((!xml || !xml.includes('<entry>')) && handle) {
+      xml = await tryProxy('https://www.youtube.com/feeds/videos.xml?user=' + handle);
     }
 
-    if (!xml || !xml.includes('<entry>')) {
-      if (handle) {
-        const pageXml = await fetchFeed('https://www.youtube.com/@' + handle);
-        const idMatch = pageXml && pageXml.match(/"channelId":"(UC[A-Za-z0-9_-]+)"/);
-        if (idMatch) {
-          xml = await fetchFeed('https://www.youtube.com/feeds/videos.xml?channel_id=' + idMatch[1]);
+    // Try resolving @handle via YouTube page to get channel ID
+    if ((!xml || !xml.includes('<entry>')) && handle) {
+      showRssMsg('Resolving channel handle…', 'loading');
+      const page = await tryProxy('https://www.youtube.com/@' + handle + '/videos');
+      if (page) {
+        const m = page.match(/"channelId":"(UC[A-Za-z0-9_-]+)"/);
+        if (m) {
+          xml = await tryProxy('https://www.youtube.com/feeds/videos.xml?channel_id=' + m[1]);
         }
       }
     }
 
     if (!xml || !xml.includes('<entry>')) {
-      showRssMsg('Could not find videos for that channel.', 'error');
+      showRssMsg('Could not fetch this channel. Try the direct channel ID format: youtube.com/channel/UCxxxxxxx', 'error');
       btn.disabled = false; return;
     }
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(xml, 'text/xml');
     const entries = Array.from(doc.querySelectorAll('entry')).slice(0, count);
-
     if (!entries.length) { showRssMsg('No videos found.', 'error'); btn.disabled = false; return; }
 
     let added = 0;
@@ -932,7 +947,7 @@ async function importFromChannel() {
       const vidEl = entry.querySelector('videoId');
       const idEl = entry.querySelector('id');
       const videoId = vidEl ? vidEl.textContent : (idEl ? idEl.textContent.split(':').pop() : null);
-      if (!videoId) return;
+      if (!videoId || videoId.length < 5) return;
       playlists[activePl].items.push({
         platform: 'YouTube',
         color: '#ff7878',
@@ -951,7 +966,7 @@ async function importFromChannel() {
     showRssMsg('Added ' + added + ' video' + (added !== 1 ? 's' : '') + ' from channel!', 'success');
     document.getElementById('rssInput').value = '';
   } catch(e) {
-    showRssMsg('Failed to fetch \u2014 check the URL and try again.', 'error');
+    showRssMsg('Failed to fetch. Try: youtube.com/channel/UCxxxxxx format instead.', 'error');
   }
   btn.disabled = false;
 }
