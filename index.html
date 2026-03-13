@@ -5,240 +5,226 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>REEL</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Syne+Mono&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #080810;
-      --glow: #5b3fff;
-      --glow2: #ff3f8c;
-      --accent: #c8ff57;
-      --text: #eeeef5;
-      --muted: #4a4a65;
-      --surface: rgba(255,255,255,0.03);
-      --border: rgba(255,255,255,0.07);
+      --bg: #080810; --glow: #5b3fff; --glow2: #ff3f8c;
+      --accent: #c8ff57; --text: #eeeef5; --muted: #4a4a65;
+      --surface: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.07);
     }
-
     html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Syne', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      overflow-x: hidden;
-    }
-
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
     .bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.18; animation: drift 18s ease-in-out infinite alternate; }
     .orb-1 { width: 600px; height: 600px; background: var(--glow); top: -200px; left: -150px; }
     .orb-2 { width: 500px; height: 500px; background: var(--glow2); bottom: -150px; right: -100px; animation-delay: -6s; }
     .orb-3 { width: 350px; height: 350px; background: #3fffcb; top: 40%; left: 40%; animation-delay: -12s; opacity: 0.07; }
+    @keyframes drift { from{transform:translate(0,0) scale(1)} to{transform:translate(40px,30px) scale(1.08)} }
+    body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E"); pointer-events:none; z-index:9999; }
 
-    @keyframes drift {
-      from { transform: translate(0,0) scale(1); }
-      to   { transform: translate(40px,30px) scale(1.08); }
-    }
+    /* ── Auth overlay ── */
+    .auth-overlay { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:1.5rem; background:rgba(8,8,16,0.92); backdrop-filter:blur(20px); }
+    .auth-overlay.hidden { display:none; }
+    .auth-card { width:100%; max-width:400px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:2.5rem 2rem; box-shadow:0 0 0 1px rgba(255,255,255,0.04) inset, 0 40px 100px rgba(0,0,0,0.6), 0 0 80px rgba(91,63,255,0.1); }
+    .auth-logo { font-size:2.8rem; font-weight:800; letter-spacing:-0.03em; background:linear-gradient(135deg,#fff 30%,#a78bff 70%,var(--glow2) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; margin-bottom:0.3rem; }
+    .auth-tagline { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.18em; color:var(--muted); text-transform:uppercase; text-align:center; margin-bottom:2rem; }
+    .auth-tabs { display:flex; gap:0; margin-bottom:1.8rem; background:rgba(255,255,255,0.04); border-radius:10px; padding:3px; }
+    .auth-tab { flex:1; font-family:'Syne',sans-serif; font-size:0.8rem; font-weight:600; padding:0.6rem; border-radius:8px; border:none; background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; }
+    .auth-tab.active { background:rgba(255,255,255,0.08); color:var(--text); }
+    .auth-field { margin-bottom:1rem; }
+    .auth-label { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:0.45rem; }
+    .auth-input { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text); font-family:'Syne Mono',monospace; font-size:0.82rem; padding:0.8rem 1rem; border-radius:10px; outline:none; transition:border-color 0.2s,background 0.2s; }
+    .auth-input::placeholder { color:var(--muted); }
+    .auth-input:focus { border-color:rgba(91,63,255,0.6); background:rgba(91,63,255,0.06); }
+    .auth-submit { width:100%; margin-top:1.4rem; background:var(--accent); color:#0a0a14; border:none; font-family:'Syne',sans-serif; font-size:0.85rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:0.9rem; border-radius:10px; cursor:pointer; transition:background 0.15s,box-shadow 0.2s,transform 0.1s; box-shadow:0 0 30px rgba(200,255,87,0.2); }
+    .auth-submit:hover { background:#d8ff78; box-shadow:0 0 40px rgba(200,255,87,0.35); }
+    .auth-submit:active { transform:scale(0.98); }
+    .auth-submit:disabled { opacity:0.5; cursor:default; transform:none; }
+    .auth-msg { margin-top:1rem; font-family:'Syne Mono',monospace; font-size:0.7rem; text-align:center; min-height:1.2rem; }
+    .auth-msg.error { color:#ff8888; }
+    .auth-msg.success { color:#88ffb8; }
 
-    body::after {
-      content: ''; position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-      pointer-events: none; z-index: 9999;
-    }
+    /* ── Top bar ── */
+    .top-bar { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:flex-end; padding:0.75rem 1.5rem; background:rgba(8,8,16,0.7); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
+    .user-pill { display:flex; align-items:center; gap:0.6rem; font-family:'Syne Mono',monospace; font-size:0.68rem; color:var(--muted); }
+    .user-email { max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .signout-btn { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.07em; padding:0.28rem 0.7rem; border-radius:100px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; }
+    .signout-btn:hover { border-color:rgba(255,120,120,0.4); color:#ff8888; }
+    .save-status { font-family:'Syne Mono',monospace; font-size:0.6rem; letter-spacing:0.08em; color:var(--muted); transition:color 0.3s; }
+    .save-status.saving { color:#a78bff; }
+    .save-status.saved { color:#88ffb8; }
 
-    .wrap {
-      position: relative; z-index: 1;
-      width: 100%; max-width: 860px;
-      padding: 0 1.5rem 5rem;
-      display: flex; flex-direction: column; align-items: center;
-    }
+    .wrap { position:relative; z-index:1; width:100%; max-width:860px; padding:5rem 1.5rem 5rem; display:flex; flex-direction:column; align-items:center; }
 
-    header {
-      width: 100%; padding: 3rem 0 2.4rem;
-      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
-      animation: fadeUp 0.7s ease both;
-    }
-    .wordmark {
-      font-size: clamp(3.5rem, 10vw, 6.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1;
-      background: linear-gradient(135deg, #fff 30%, #a78bff 70%, var(--glow2) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .subtitle { font-family: 'Syne Mono', monospace; font-size: 0.7rem; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; }
+    header { width:100%; padding:1.5rem 0 2.4rem; display:flex; flex-direction:column; align-items:center; gap:0.5rem; animation:fadeUp 0.7s ease both; }
+    .wordmark { font-size:clamp(3.5rem,10vw,6.5rem); font-weight:800; letter-spacing:-0.03em; line-height:1; background:linear-gradient(135deg,#fff 30%,#a78bff 70%,var(--glow2) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .subtitle { font-family:'Syne Mono',monospace; font-size:0.7rem; letter-spacing:0.22em; color:var(--muted); text-transform:uppercase; }
 
-    .input-card {
-      width: 100%; margin-top: 2.4rem;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 1.4rem; backdrop-filter: blur(12px);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 30px 80px rgba(0,0,0,0.5);
-      animation: fadeUp 0.7s 0.1s ease both; transition: box-shadow 0.3s;
-    }
-    .input-card:focus-within { box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 30px 80px rgba(0,0,0,0.5), 0 0 0 2px rgba(91,63,255,0.4); }
-    .input-row { display: flex; gap: 0.75rem; }
-    .url-input {
-      flex: 1; min-width: 0; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-      color: var(--text); font-family: 'Syne Mono', monospace; font-size: 0.8rem;
-      padding: 0.85rem 1.1rem; border-radius: 10px; outline: none;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .url-input::placeholder { color: var(--muted); }
-    .url-input:focus { border-color: rgba(91,63,255,0.6); background: rgba(91,63,255,0.06); }
+    .input-card { width:100%; margin-top:2.4rem; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.4rem; backdrop-filter:blur(12px); box-shadow:0 0 0 1px rgba(255,255,255,0.04) inset,0 30px 80px rgba(0,0,0,0.5); animation:fadeUp 0.7s 0.1s ease both; transition:box-shadow 0.3s; }
+    .input-card:focus-within { box-shadow:0 0 0 1px rgba(255,255,255,0.06) inset,0 30px 80px rgba(0,0,0,0.5),0 0 0 2px rgba(91,63,255,0.4); }
+    .input-row { display:flex; gap:0.75rem; }
+    .url-input { flex:1; min-width:0; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text); font-family:'Syne Mono',monospace; font-size:0.8rem; padding:0.85rem 1.1rem; border-radius:10px; outline:none; transition:border-color 0.2s,background 0.2s; }
+    .url-input::placeholder { color:var(--muted); }
+    .url-input:focus { border-color:rgba(91,63,255,0.6); background:rgba(91,63,255,0.06); }
+    .play-btn { display:flex; align-items:center; gap:0.5rem; background:var(--accent); color:#0a0a14; border:none; font-family:'Syne',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:0.85rem 1.5rem; border-radius:10px; cursor:pointer; white-space:nowrap; transition:background 0.15s,transform 0.12s,box-shadow 0.2s; box-shadow:0 0 30px rgba(200,255,87,0.22); }
+    .play-btn:hover { background:#d8ff78; box-shadow:0 0 40px rgba(200,255,87,0.38); }
+    .play-btn:active { transform:scale(0.96); }
+    .play-icon { width:13px; height:13px; fill:#0a0a14; flex-shrink:0; }
+    .pills { display:flex; gap:0.45rem; flex-wrap:wrap; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border); }
+    .pill-label { font-family:'Syne Mono',monospace; font-size:0.62rem; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; align-self:center; margin-right:0.2rem; }
+    .pill { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.07em; padding:0.22rem 0.65rem; border-radius:100px; border:1px solid transparent; }
+    .pill-yt { background:rgba(255,69,69,0.1); border-color:rgba(255,69,69,0.25); color:#ff7878; }
+    .pill-vi { background:rgba(69,145,255,0.1); border-color:rgba(69,145,255,0.25); color:#74acff; }
+    .pill-dm { background:rgba(85,255,136,0.1); border-color:rgba(85,255,136,0.25); color:#7dffb0; }
+    .pill-tw { background:rgba(155,89,255,0.1); border-color:rgba(155,89,255,0.25); color:#bb8cff; }
+    .pill-fb { background:rgba(69,145,255,0.1); border-color:rgba(69,145,255,0.2); color:#8bbcff; }
+    .error-msg { display:none; margin-top:0.85rem; width:100%; padding:0.8rem 1.1rem; background:rgba(255,69,69,0.07); border:1px solid rgba(255,69,69,0.2); border-radius:10px; font-family:'Syne Mono',monospace; font-size:0.72rem; color:#ff8888; letter-spacing:0.04em; }
+    .error-msg.show { display:block; animation:shake 0.3s ease; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
 
-    .play-btn {
-      display: flex; align-items: center; gap: 0.5rem;
-      background: var(--accent); color: #0a0a14; border: none;
-      font-family: 'Syne', sans-serif; font-size: 0.82rem; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      padding: 0.85rem 1.5rem; border-radius: 10px; cursor: pointer; white-space: nowrap;
-      transition: background 0.15s, transform 0.12s, box-shadow 0.2s;
-      box-shadow: 0 0 30px rgba(200,255,87,0.22);
-    }
-    .play-btn:hover { background: #d8ff78; box-shadow: 0 0 40px rgba(200,255,87,0.38); }
-    .play-btn:active { transform: scale(0.96); }
-    .play-icon { width: 13px; height: 13px; fill: #0a0a14; flex-shrink: 0; }
+    .player-wrap { width:100%; margin-top:1.8rem; animation:fadeUp 0.7s 0.2s ease both; }
+    .player-shell { position:relative; border-radius:14px; overflow:hidden; background:#000; aspect-ratio:16/9; box-shadow:0 0 0 1px var(--border),0 40px 100px rgba(0,0,0,0.7),0 0 80px rgba(91,63,255,0.08); transition:box-shadow 0.5s; }
+    .player-shell iframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
+    .scanlines { position:absolute; inset:0; pointer-events:none; z-index:2; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,0.012) 2px,rgba(255,255,255,0.012) 4px); }
+    .empty { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2rem; z-index:1; }
+    .empty-ring { width:72px; height:72px; border-radius:50%; border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; position:relative; }
+    .empty-ring::before { content:''; position:absolute; inset:-8px; border-radius:50%; border:1px solid rgba(255,255,255,0.03); }
+    .empty-ring svg { opacity:0.25; }
+    .empty-text { font-family:'Syne Mono',monospace; font-size:0.68rem; color:var(--muted); letter-spacing:0.15em; text-transform:uppercase; }
+    .info-strip { display:none; margin-top:1rem; align-items:center; gap:0.85rem; padding:0.8rem 1.1rem; background:var(--surface); border:1px solid var(--border); border-radius:10px; backdrop-filter:blur(8px); }
+    .info-strip.show { display:flex; }
+    .platform-tag { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; padding:0.22rem 0.7rem; border-radius:100px; white-space:nowrap; }
+    .strip-url { font-family:'Syne Mono',monospace; font-size:0.68rem; color:var(--muted); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .orig-link { font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:600; color:var(--accent); text-decoration:none; letter-spacing:0.06em; white-space:nowrap; opacity:0.85; transition:opacity 0.15s; }
+    .orig-link:hover { opacity:1; }
 
-    .pills { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-    .pill-label { font-family: 'Syne Mono', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; align-self: center; margin-right: 0.2rem; }
-    .pill { font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.07em; padding: 0.22rem 0.65rem; border-radius: 100px; border: 1px solid transparent; }
-    .pill-yt { background: rgba(255,69,69,0.1); border-color: rgba(255,69,69,0.25); color: #ff7878; }
-    .pill-vi { background: rgba(69,145,255,0.1); border-color: rgba(69,145,255,0.25); color: #74acff; }
-    .pill-dm { background: rgba(85,255,136,0.1); border-color: rgba(85,255,136,0.25); color: #7dffb0; }
-    .pill-tw { background: rgba(155,89,255,0.1); border-color: rgba(155,89,255,0.25); color: #bb8cff; }
-    .pill-fb { background: rgba(69,145,255,0.1); border-color: rgba(69,145,255,0.2); color: #8bbcff; }
+    .howto { width:100%; margin-top:3rem; animation:fadeUp 0.7s 0.3s ease both; }
+    .howto-title { font-family:'Syne Mono',monospace; font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin-bottom:1rem; }
+    .howto-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:1px; border-radius:12px; overflow:hidden; border:1px solid var(--border); }
+    .howto-cell { background:var(--surface); padding:1.3rem 1.2rem; backdrop-filter:blur(8px); transition:background 0.2s; }
+    .howto-cell:hover { background:rgba(255,255,255,0.05); }
+    .howto-platform { font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.45rem; }
+    .howto-desc { font-size:0.75rem; color:var(--muted); line-height:1.65; }
+    .howto-desc code { font-family:'Syne Mono',monospace; font-size:0.68rem; color:#777; background:rgba(255,255,255,0.05); padding:0.1rem 0.35rem; border-radius:4px; }
 
-    .error-msg {
-      display: none; margin-top: 0.85rem; width: 100%;
-      padding: 0.8rem 1.1rem; background: rgba(255,69,69,0.07); border: 1px solid rgba(255,69,69,0.2);
-      border-radius: 10px; font-family: 'Syne Mono', monospace; font-size: 0.72rem; color: #ff8888; letter-spacing: 0.04em;
-    }
-    .error-msg.show { display: block; animation: shake 0.3s ease; }
-    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+    .section-divider { width:100%; margin-top:4rem; display:flex; align-items:center; gap:1rem; }
+    .divider-line { flex:1; height:1px; background:var(--border); }
+    .divider-label { font-family:'Syne Mono',monospace; font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
 
-    /* ── Player ── */
-    .player-wrap { width: 100%; margin-top: 1.8rem; animation: fadeUp 0.7s 0.2s ease both; }
-    .player-shell {
-      position: relative; border-radius: 14px; overflow: hidden;
-      background: #000; aspect-ratio: 16/9;
-      box-shadow: 0 0 0 1px var(--border), 0 40px 100px rgba(0,0,0,0.7), 0 0 80px rgba(91,63,255,0.08);
-      transition: box-shadow 0.5s;
-    }
-    .player-shell iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
-    .scanlines {
-      position: absolute; inset: 0; pointer-events: none; z-index: 2;
-      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px);
-    }
-    .empty {
-      position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 1.2rem; z-index: 1;
-    }
-    .empty-ring {
-      width: 72px; height: 72px; border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.08);
-      display: flex; align-items: center; justify-content: center; position: relative;
-    }
-    .empty-ring::before { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.03); }
-    .empty-ring svg { opacity: 0.25; }
-    .empty-text { font-family: 'Syne Mono', monospace; font-size: 0.68rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+    .feed-section { width:100%; margin-top:2.5rem; animation:fadeUp 0.7s 0.35s ease both; }
+    .feed-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; flex-wrap:wrap; gap:0.75rem; }
+    .feed-title-group { display:flex; flex-direction:column; gap:0.3rem; }
+    .feed-title { font-size:1.3rem; font-weight:800; letter-spacing:-0.02em; background:linear-gradient(90deg,#fff 40%,#a78bff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .feed-subtitle { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }
 
-    .info-strip {
-      display: none; margin-top: 1rem; align-items: center; gap: 0.85rem;
-      padding: 0.8rem 1.1rem; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; backdrop-filter: blur(8px);
-    }
-    .info-strip.show { display: flex; }
-    .platform-tag { font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; padding: 0.22rem 0.7rem; border-radius: 100px; white-space: nowrap; }
-    .strip-url { font-family: 'Syne Mono', monospace; font-size: 0.68rem; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .orig-link { font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 600; color: var(--accent); text-decoration: none; letter-spacing: 0.06em; white-space: nowrap; opacity: 0.85; transition: opacity 0.15s; }
-    .orig-link:hover { opacity: 1; }
+    .playlist-bar { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; margin-bottom:0.85rem; }
+    .pl-tab { font-family:'Syne Mono',monospace; font-size:0.65rem; letter-spacing:0.06em; padding:0.35rem 0.9rem; border-radius:100px; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; transition:all 0.15s; white-space:nowrap; display:flex; align-items:center; gap:0.4rem; }
+    .pl-tab:hover { border-color:rgba(255,255,255,0.18); color:var(--text); }
+    .pl-tab.active { background:rgba(200,255,87,0.1); border-color:rgba(200,255,87,0.35); color:var(--accent); }
+    .pl-count { font-size:0.58rem; background:rgba(255,255,255,0.08); padding:0.1rem 0.4rem; border-radius:100px; }
+    .pl-tab.active .pl-count { background:rgba(200,255,87,0.2); }
+    .pl-new-btn { font-family:'Syne Mono',monospace; font-size:0.65rem; padding:0.35rem 0.85rem; border-radius:100px; border:1px dashed rgba(255,255,255,0.15); background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+    .pl-new-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .pl-rename-row { display:none; align-items:center; gap:0.5rem; margin-bottom:0.75rem; }
+    .pl-rename-row.show { display:flex; }
+    .pl-rename-input { flex:1; max-width:200px; background:rgba(255,255,255,0.04); border:1px solid rgba(200,255,87,0.3); color:var(--text); font-family:'Syne Mono',monospace; font-size:0.72rem; padding:0.4rem 0.8rem; border-radius:8px; outline:none; }
+    .pl-rename-ok { font-family:'Syne Mono',monospace; font-size:0.62rem; background:rgba(200,255,87,0.12); border:1px solid rgba(200,255,87,0.3); color:var(--accent); padding:0.4rem 0.8rem; border-radius:8px; cursor:pointer; }
+    .pl-rename-cancel { font-family:'Syne Mono',monospace; font-size:0.62rem; background:transparent; border:1px solid var(--border); color:var(--muted); padding:0.4rem 0.8rem; border-radius:8px; cursor:pointer; }
 
-    .howto { width: 100%; margin-top: 3rem; animation: fadeUp 0.7s 0.3s ease both; }
-    .howto-title { font-family: 'Syne Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
-    .howto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 1px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
-    .howto-cell { background: var(--surface); padding: 1.3rem 1.2rem; backdrop-filter: blur(8px); transition: background 0.2s; }
-    .howto-cell:hover { background: rgba(255,255,255,0.05); }
-    .howto-platform { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.45rem; }
-    .howto-desc { font-size: 0.75rem; color: var(--muted); line-height: 1.65; }
-    .howto-desc code { font-family: 'Syne Mono', monospace; font-size: 0.68rem; color: #777; background: rgba(255,255,255,0.05); padding: 0.1rem 0.35rem; border-radius: 4px; }
+    .feed-controls { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.9rem; flex-wrap:wrap; }
+    .shuffle-btn { display:flex; align-items:center; gap:0.45rem; font-family:'Syne Mono',monospace; font-size:0.65rem; letter-spacing:0.07em; padding:0.38rem 0.9rem; border-radius:100px; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; transition:all 0.15s; }
+    .shuffle-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+    .shuffle-btn.active { background:rgba(91,63,255,0.15); border-color:rgba(91,63,255,0.4); color:#a78bff; }
+    .del-pl-btn { display:flex; align-items:center; gap:0.4rem; font-family:'Syne Mono',monospace; font-size:0.65rem; padding:0.38rem 0.8rem; border-radius:100px; border:1px solid rgba(255,69,69,0.2); background:transparent; color:rgba(255,120,120,0.5); cursor:pointer; transition:all 0.15s; margin-left:auto; }
+    .del-pl-btn:hover { background:rgba(255,69,69,0.08); color:#ff7878; border-color:rgba(255,69,69,0.4); }
 
-    /* ── Feed ── */
-    .section-divider { width: 100%; margin-top: 4rem; display: flex; align-items: center; gap: 1rem; }
-    .divider-line { flex: 1; height: 1px; background: var(--border); }
-    .divider-label { font-family: 'Syne Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+    .feed-add-bar { display:flex; gap:0.6rem; align-items:center; width:100%; margin-bottom:1.2rem; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:0.85rem 1rem; backdrop-filter:blur(10px); transition:box-shadow 0.3s; }
+    .feed-add-bar:focus-within { box-shadow:0 0 0 2px rgba(200,255,87,0.25); border-color:rgba(200,255,87,0.3); }
+    .feed-type-toggle { display:flex; gap:0.3rem; background:rgba(255,255,255,0.04); border-radius:7px; padding:3px; flex-shrink:0; }
+    .toggle-btn { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.07em; padding:0.3rem 0.65rem; border-radius:5px; border:none; background:transparent; color:var(--muted); cursor:pointer; transition:background 0.15s,color 0.15s; white-space:nowrap; }
+    .toggle-btn.active { background:rgba(255,255,255,0.1); color:var(--text); }
+    .feed-url-input { flex:1; min-width:0; background:transparent; border:none; color:var(--text); font-family:'Syne Mono',monospace; font-size:0.78rem; outline:none; }
+    .feed-url-input::placeholder { color:var(--muted); }
+    .feed-add-btn { display:flex; align-items:center; gap:0.4rem; background:rgba(200,255,87,0.1); border:1px solid rgba(200,255,87,0.25); color:var(--accent); font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:0.5rem 1rem; border-radius:7px; cursor:pointer; white-space:nowrap; flex-shrink:0; transition:background 0.15s,box-shadow 0.2s; }
+    .feed-add-btn:hover { background:rgba(200,255,87,0.18); box-shadow:0 0 20px rgba(200,255,87,0.15); }
+    .feed-error { display:none; font-family:'Syne Mono',monospace; font-size:0.7rem; color:#ff8888; padding:0.5rem 0.2rem; margin-top:-0.5rem; margin-bottom:0.6rem; }
+    .feed-error.show { display:block; }
 
-    .feed-section { width: 100%; margin-top: 2.5rem; animation: fadeUp 0.7s 0.35s ease both; }
-    .feed-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.4rem; flex-wrap: wrap; gap: 0.75rem; }
-    .feed-title-group { display: flex; flex-direction: column; gap: 0.3rem; }
-    .feed-title { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; background: linear-gradient(90deg, #fff 40%, #a78bff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .feed-subtitle { font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+    .feed-viewport { position:relative; width:100%; height:82vh; max-height:700px; border-radius:20px; overflow:hidden; border:1px solid var(--border); box-shadow:0 0 0 1px rgba(255,255,255,0.03) inset,0 40px 80px rgba(0,0,0,0.6); background:#000; }
+    .feed-track { width:100%; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none; }
+    .feed-track::-webkit-scrollbar { display:none; }
+    .feed-slide { scroll-snap-align:start; position:relative; width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+    .feed-slide iframe { position:absolute; inset:0; width:100%; height:100%; border:none; }
+    .slide-overlay { position:absolute; bottom:0; left:0; right:0; padding:1.5rem 1.2rem 1.2rem; background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,transparent 100%); display:flex; align-items:flex-end; justify-content:space-between; z-index:10; pointer-events:none; }
+    .slide-badge { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; padding:0.2rem 0.6rem; border-radius:100px; pointer-events:none; }
+    .slide-remove { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.6); font-size:0.9rem; display:flex; align-items:center; justify-content:center; cursor:pointer; pointer-events:all; transition:background 0.15s,color 0.15s; line-height:1; }
+    .slide-remove:hover { background:rgba(255,69,69,0.3); color:#fff; border-color:rgba(255,69,69,0.4); }
+    .feed-nav { position:absolute; right:1rem; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:0.5rem; z-index:20; }
+    .nav-btn { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); font-size:1rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background 0.15s,color 0.15s,transform 0.1s; line-height:1; }
+    .nav-btn:hover { background:rgba(255,255,255,0.14); color:#fff; }
+    .nav-btn:active { transform:scale(0.9); }
+    .nav-btn:disabled { opacity:0.2; cursor:default; pointer-events:none; }
+    .feed-dots { position:absolute; left:1rem; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:5px; z-index:20; }
+    .dot { width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.2); transition:background 0.2s,transform 0.2s; cursor:pointer; }
+    .dot.active { background:var(--accent); transform:scale(1.4); }
+    .feed-counter { position:absolute; top:1rem; left:50%; transform:translateX(-50%); font-family:'Syne Mono',monospace; font-size:0.65rem; letter-spacing:0.1em; color:rgba(255,255,255,0.35); z-index:20; pointer-events:none; white-space:nowrap; }
+    .shuffle-badge { position:absolute; top:1rem; right:1rem; font-family:'Syne Mono',monospace; font-size:0.58rem; color:#a78bff; background:rgba(91,63,255,0.2); border:1px solid rgba(91,63,255,0.35); padding:0.18rem 0.55rem; border-radius:100px; z-index:20; display:none; }
+    .shuffle-badge.show { display:block; }
+    .feed-empty { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1rem; color:var(--muted); }
+    .feed-empty-icon { width:64px; height:64px; border-radius:50%; border:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:center; }
+    .feed-empty-icon svg { opacity:0.2; }
+    .feed-empty-text { font-family:'Syne Mono',monospace; font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; }
+    .feed-empty-hint { font-size:0.75rem; color:rgba(255,255,255,0.18); text-align:center; max-width:260px; line-height:1.6; }
 
-    .feed-add-bar {
-      display: flex; gap: 0.6rem; align-items: center; width: 100%; margin-bottom: 1.2rem;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 0.85rem 1rem; backdrop-filter: blur(10px); transition: box-shadow 0.3s;
-    }
-    .feed-add-bar:focus-within { box-shadow: 0 0 0 2px rgba(200,255,87,0.25); border-color: rgba(200,255,87,0.3); }
-    .feed-type-toggle { display: flex; gap: 0.3rem; background: rgba(255,255,255,0.04); border-radius: 7px; padding: 3px; flex-shrink: 0; }
-    .toggle-btn { font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.07em; padding: 0.3rem 0.65rem; border-radius: 5px; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap; }
-    .toggle-btn.active { background: rgba(255,255,255,0.1); color: var(--text); }
-    .feed-url-input { flex: 1; min-width: 0; background: transparent; border: none; color: var(--text); font-family: 'Syne Mono', monospace; font-size: 0.78rem; outline: none; }
-    .feed-url-input::placeholder { color: var(--muted); }
-    .feed-add-btn { display: flex; align-items: center; gap: 0.4rem; background: rgba(200,255,87,0.1); border: 1px solid rgba(200,255,87,0.25); color: var(--accent); font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1rem; border-radius: 7px; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: background 0.15s, box-shadow 0.2s; }
-    .feed-add-btn:hover { background: rgba(200,255,87,0.18); box-shadow: 0 0 20px rgba(200,255,87,0.15); }
-
-    .feed-error { display: none; font-family: 'Syne Mono', monospace; font-size: 0.7rem; color: #ff8888; padding: 0.5rem 0.2rem; margin-top: -0.5rem; margin-bottom: 0.6rem; }
-    .feed-error.show { display: block; }
-
-    .feed-viewport { position: relative; width: 100%; height: 82vh; max-height: 700px; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset, 0 40px 80px rgba(0,0,0,0.6); background: #000; }
-    .feed-track { width: 100%; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
-    .feed-track::-webkit-scrollbar { display: none; }
-    .feed-slide { scroll-snap-align: start; position: relative; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
-    .feed-slide iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
-
-    .slide-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem 1.2rem 1.2rem; background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%); display: flex; align-items: flex-end; justify-content: space-between; z-index: 10; pointer-events: none; }
-    .slide-badge { font-family: 'Syne Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; padding: 0.2rem 0.6rem; border-radius: 100px; pointer-events: none; }
-    .slide-remove { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); font-size: 0.9rem; display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: all; transition: background 0.15s, color 0.15s; line-height: 1; }
-    .slide-remove:hover { background: rgba(255,69,69,0.3); color: #fff; border-color: rgba(255,69,69,0.4); }
-
-    .feed-nav { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 0.5rem; z-index: 20; }
-    .nav-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.1s; line-height: 1; }
-    .nav-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
-    .nav-btn:active { transform: scale(0.9); }
-    .nav-btn:disabled { opacity: 0.2; cursor: default; pointer-events: none; }
-
-    .feed-dots { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 5px; z-index: 20; }
-    .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: background 0.2s, transform 0.2s; cursor: pointer; }
-    .dot.active { background: var(--accent); transform: scale(1.4); }
-    .feed-counter { position: absolute; top: 1rem; right: 1rem; font-family: 'Syne Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); z-index: 20; pointer-events: none; }
-
-    .feed-empty { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; color: var(--muted); }
-    .feed-empty-icon { width: 64px; height: 64px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: center; }
-    .feed-empty-icon svg { opacity: 0.2; }
-    .feed-empty-text { font-family: 'Syne Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; }
-    .feed-empty-hint { font-size: 0.75rem; color: rgba(255,255,255,0.18); text-align: center; max-width: 240px; line-height: 1.6; }
-
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-
-    @media (max-width: 520px) {
-      .wordmark { font-size: 3.2rem; }
-      .input-row { flex-direction: column; }
-      .play-btn { width: 100%; justify-content: center; }
-      .feed-add-bar { flex-wrap: wrap; }
-      .feed-add-btn { flex: 1; justify-content: center; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    @media (max-width:520px) {
+      .wordmark { font-size:3.2rem; }
+      .input-row { flex-direction:column; }
+      .play-btn { width:100%; justify-content:center; }
+      .feed-add-bar { flex-wrap:wrap; }
+      .feed-add-btn { flex:1; justify-content:center; }
     }
   </style>
 </head>
 <body>
 
 <div class="bg-orbs">
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
+  <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+</div>
+
+<!-- Auth overlay -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">reel</div>
+    <div class="auth-tagline">Social Video Player</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabSignin" onclick="switchAuthTab('signin')">Sign in</button>
+      <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Create account</button>
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">Email</label>
+      <input class="auth-input" id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">Password</label>
+      <input class="auth-input" id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <button class="auth-submit" id="authSubmit" onclick="handleAuth()">Sign in</button>
+    <div class="auth-msg" id="authMsg"></div>
+  </div>
+</div>
+
+<!-- Top bar -->
+<div class="top-bar" id="topBar" style="display:none">
+  <div class="user-pill">
+    <span class="save-status" id="saveStatus"></span>
+    <span class="user-email" id="userEmail"></span>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
+  </div>
 </div>
 
 <div class="wrap">
-
   <header>
     <div class="wordmark">reel</div>
     <div class="subtitle">Social Video Player</div>
@@ -246,24 +232,17 @@
 
   <div class="input-card">
     <div class="input-row">
-      <input class="url-input" id="urlInput" type="text"
-        placeholder="Paste a YouTube, Vimeo, Twitch, or Dailymotion link…"
-        autocomplete="off" spellcheck="false" />
+      <input class="url-input" id="urlInput" type="text" placeholder="Paste a YouTube, Vimeo, Twitch, or Dailymotion link…" autocomplete="off" spellcheck="false" />
       <button class="play-btn" onclick="loadVideo()">
-        <svg class="play-icon" viewBox="0 0 16 16"><polygon points="3,1 15,8 3,15"/></svg>
-        Play
+        <svg class="play-icon" viewBox="0 0 16 16"><polygon points="3,1 15,8 3,15"/></svg>Play
       </button>
     </div>
     <div class="pills">
       <span class="pill-label">Works with</span>
-      <span class="pill pill-yt">YouTube</span>
-      <span class="pill pill-vi">Vimeo</span>
-      <span class="pill pill-dm">Dailymotion</span>
-      <span class="pill pill-tw">Twitch</span>
-      <span class="pill pill-fb">Facebook</span>
+      <span class="pill pill-yt">YouTube</span><span class="pill pill-vi">Vimeo</span>
+      <span class="pill pill-dm">Dailymotion</span><span class="pill pill-tw">Twitch</span><span class="pill pill-fb">Facebook</span>
     </div>
   </div>
-
   <div class="error-msg" id="errorMsg"></div>
 
   <div class="player-wrap">
@@ -271,14 +250,11 @@
       <div class="scanlines"></div>
       <div class="empty" id="emptyState">
         <div class="empty-ring">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.3">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.3"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </div>
         <span class="empty-text">Paste a link above</span>
       </div>
     </div>
-
     <div class="info-strip" id="infoStrip">
       <span class="platform-tag" id="platformTag"></span>
       <span class="strip-url" id="stripUrl"></span>
@@ -289,37 +265,35 @@
   <div class="howto">
     <div class="howto-title">// Supported Formats</div>
     <div class="howto-grid">
-      <div class="howto-cell">
-        <div class="howto-platform" style="color:#ff7878">YouTube</div>
-        <div class="howto-desc"><code>youtube.com/watch?v=…</code><br><code>youtu.be/…</code> &amp; Shorts</div>
-      </div>
-      <div class="howto-cell">
-        <div class="howto-platform" style="color:#74acff">Vimeo</div>
-        <div class="howto-desc"><code>vimeo.com/[id]</code><br>Public &amp; unlisted videos</div>
-      </div>
-      <div class="howto-cell">
-        <div class="howto-platform" style="color:#7dffb0">Dailymotion</div>
-        <div class="howto-desc"><code>dailymotion.com/video/…</code><br><code>dai.ly/…</code> short links</div>
-      </div>
-      <div class="howto-cell">
-        <div class="howto-platform" style="color:#bb8cff">Twitch</div>
-        <div class="howto-desc">VODs <code>/videos/…</code><br>Clips <code>clips.twitch.tv/…</code></div>
-      </div>
+      <div class="howto-cell"><div class="howto-platform" style="color:#ff7878">YouTube</div><div class="howto-desc"><code>youtube.com/watch?v=…</code><br><code>youtu.be/…</code> &amp; Shorts</div></div>
+      <div class="howto-cell"><div class="howto-platform" style="color:#74acff">Vimeo</div><div class="howto-desc"><code>vimeo.com/[id]</code><br>Public &amp; unlisted videos</div></div>
+      <div class="howto-cell"><div class="howto-platform" style="color:#7dffb0">Dailymotion</div><div class="howto-desc"><code>dailymotion.com/video/…</code><br><code>dai.ly/…</code> short links</div></div>
+      <div class="howto-cell"><div class="howto-platform" style="color:#bb8cff">Twitch</div><div class="howto-desc">VODs <code>/videos/…</code><br>Clips <code>clips.twitch.tv/…</code></div></div>
     </div>
   </div>
 
   <div class="section-divider">
-    <div class="divider-line"></div>
-    <div class="divider-label">Short-Form Feed</div>
-    <div class="divider-line"></div>
+    <div class="divider-line"></div><div class="divider-label">Short-Form Feed</div><div class="divider-line"></div>
   </div>
 
   <div class="feed-section">
     <div class="feed-header">
       <div class="feed-title-group">
         <div class="feed-title">Shorts &amp; TikToks</div>
-        <div class="feed-subtitle">// Scroll your queue</div>
+        <div class="feed-subtitle">// Playlists &amp; shuffle — saved to your account</div>
       </div>
+    </div>
+
+    <div class="playlist-bar" id="playlistBar"></div>
+    <div class="pl-rename-row" id="plRenameRow">
+      <input class="pl-rename-input" id="plRenameInput" placeholder="Playlist name…" maxlength="28" />
+      <button class="pl-rename-ok" onclick="confirmRename()">Save</button>
+      <button class="pl-rename-cancel" onclick="cancelRename()">Cancel</button>
+    </div>
+
+    <div class="feed-controls">
+      <button class="shuffle-btn" id="shuffleBtn" onclick="toggleShuffle()">⇄ Shuffle</button>
+      <button class="del-pl-btn" onclick="deletePlaylist()">✕ Delete playlist</button>
     </div>
 
     <div class="feed-add-bar">
@@ -327,9 +301,7 @@
         <button class="toggle-btn active" id="toggleYT" onclick="setFeedType('yt')">YT Short</button>
         <button class="toggle-btn" id="toggleTT" onclick="setFeedType('tt')">TikTok</button>
       </div>
-      <input class="feed-url-input" id="feedUrlInput"
-        placeholder="Paste a YouTube Shorts or TikTok link…"
-        autocomplete="off" spellcheck="false" />
+      <input class="feed-url-input" id="feedUrlInput" placeholder="Paste a YouTube Shorts or TikTok link…" autocomplete="off" spellcheck="false" />
       <button class="feed-add-btn" onclick="addToFeed()">+ Add</button>
     </div>
     <div class="feed-error" id="feedError"></div>
@@ -341,272 +313,392 @@
       </div>
       <div class="feed-dots" id="feedDots"></div>
       <div class="feed-counter" id="feedCounter"></div>
+      <div class="shuffle-badge" id="shuffleBadge">⇄ shuffled</div>
       <div class="feed-track" id="feedTrack">
         <div class="feed-empty" id="feedEmpty">
           <div class="feed-empty-icon">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.2">
-              <rect x="3" y="3" width="7" height="12" rx="1.5"/>
-              <rect x="14" y="3" width="7" height="12" rx="1.5"/>
-              <rect x="3" y="18" width="18" height="3" rx="1.5"/>
+              <rect x="3" y="3" width="7" height="12" rx="1.5"/><rect x="14" y="3" width="7" height="12" rx="1.5"/><rect x="3" y="18" width="18" height="3" rx="1.5"/>
             </svg>
           </div>
-          <div class="feed-empty-text">Your feed is empty</div>
-          <div class="feed-empty-hint">Add YouTube Shorts or TikTok links above and scroll through them here</div>
+          <div class="feed-empty-text">This playlist is empty</div>
+          <div class="feed-empty-hint">Paste YouTube Shorts or TikTok links above — double-tap a tab to rename it</div>
         </div>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
-  const palette = {
-    YouTube:     { color: '#ff7878', bg: 'rgba(255,69,69,0.12)',   border: 'rgba(255,69,69,0.3)' },
-    'YT Short':  { color: '#ff7878', bg: 'rgba(255,69,69,0.12)',   border: 'rgba(255,69,69,0.3)' },
-    Vimeo:       { color: '#74acff', bg: 'rgba(69,145,255,0.12)',  border: 'rgba(69,145,255,0.3)' },
-    Dailymotion: { color: '#7dffb0', bg: 'rgba(85,255,136,0.1)',   border: 'rgba(85,255,136,0.25)' },
-    Twitch:      { color: '#bb8cff', bg: 'rgba(155,89,255,0.12)',  border: 'rgba(155,89,255,0.3)' },
-    Facebook:    { color: '#8bbcff', bg: 'rgba(69,145,255,0.1)',   border: 'rgba(69,145,255,0.25)' },
-    TikTok:      { color: '#ff6b9d', bg: 'rgba(255,107,157,0.12)', border: 'rgba(255,107,157,0.3)' },
-  };
+/* ── Supabase ── */
+const SUPABASE_URL = 'https://ojttрsmgksrbdvajxjzn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_o2kUX8vYfjvznRsXbMY5Nw_idzAlaaX';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  function parseMainUrl(raw) {
-    raw = raw.trim();
-    if (!raw) return null;
-    try {
-      const url = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
-      const host = url.hostname.replace('www.', '');
-      if (host === 'youtube.com' || host === 'm.youtube.com') {
-        const s = url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
-        if (s) return { platform: 'YouTube', embedUrl: `https://www.youtube-nocookie.com/embed/${s[1]}?autoplay=1&rel=0` };
-        const v = url.searchParams.get('v');
-        if (v) return { platform: 'YouTube', embedUrl: `https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0` };
-      }
-      if (host === 'youtu.be') {
-        const id = url.pathname.slice(1).split('?')[0];
-        if (id) return { platform: 'YouTube', embedUrl: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0` };
-      }
-      if (host === 'vimeo.com' || host === 'player.vimeo.com') {
-        const m = url.pathname.match(/\/(\d+)/);
-        if (m) return { platform: 'Vimeo', embedUrl: `https://player.vimeo.com/video/${m[1]}?autoplay=1` };
-      }
-      if (host === 'dailymotion.com' || host === 'dai.ly') {
-        let id; const m = url.pathname.match(/\/video\/([a-zA-Z0-9]+)/);
-        if (m) id = m[1]; else if (host === 'dai.ly') id = url.pathname.slice(1).split('_')[0];
-        if (id) return { platform: 'Dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${id}?autoplay=1` };
-      }
-      if (host === 'clips.twitch.tv') {
-        const slug = url.pathname.slice(1);
-        if (slug) return { platform: 'Twitch', embedUrl: `https://clips.twitch.tv/embed?clip=${slug}&parent=jtoon711.github.io&autoplay=true` };
-      }
-      if (host === 'twitch.tv') {
-        const vod = url.pathname.match(/\/videos\/(\d+)/);
-        if (vod) return { platform: 'Twitch', embedUrl: `https://player.twitch.tv/?video=${vod[1]}&parent=jtoon711.github.io&autoplay=true` };
-        const clip = url.pathname.match(/\/clip\/([A-Za-z0-9_-]+)/);
-        if (clip) return { platform: 'Twitch', embedUrl: `https://clips.twitch.tv/embed?clip=${clip[1]}&parent=jtoon711.github.io&autoplay=true` };
-      }
-      if (host === 'facebook.com' || host === 'fb.watch') {
-        return { platform: 'Facebook', embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(raw)}&show_text=false&autoplay=true` };
-      }
-      return null;
-    } catch { return null; }
+let currentUser = null;
+let saveTimer = null;
+
+/* ── Auth ── */
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) onSignedIn(session.user);
+  sb.auth.onAuthStateChange((_event, session) => {
+    if (session) onSignedIn(session.user);
+    else onSignedOut();
+  });
+}
+
+async function onSignedIn(user) {
+  currentUser = user;
+  document.getElementById('authOverlay').classList.add('hidden');
+  document.getElementById('topBar').style.display = 'flex';
+  document.getElementById('userEmail').textContent = user.email;
+  await loadPlaylists();
+}
+
+function onSignedOut() {
+  currentUser = null;
+  document.getElementById('authOverlay').classList.remove('hidden');
+  document.getElementById('topBar').style.display = 'none';
+  playlists = [{name:'My Feed', items:[]}];
+  activePl = 0; currentIndex = 0;
+  renderPlaylistBar(); renderFeed();
+}
+
+function switchAuthTab(tab) {
+  const isSignin = tab === 'signin';
+  document.getElementById('tabSignin').classList.toggle('active', isSignin);
+  document.getElementById('tabSignup').classList.toggle('active', !isSignin);
+  document.getElementById('authSubmit').textContent = isSignin ? 'Sign in' : 'Create account';
+  document.getElementById('authMsg').textContent = '';
+  document.getElementById('authMsg').className = 'auth-msg';
+}
+
+async function handleAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const isSignup = document.getElementById('tabSignup').classList.contains('active');
+  const msgEl = document.getElementById('authMsg');
+  const btn = document.getElementById('authSubmit');
+  if (!email || !password) { showAuthMsg('Please fill in both fields.', 'error'); return; }
+  btn.disabled = true; btn.textContent = '…';
+  const fn = isSignup ? sb.auth.signUp.bind(sb.auth) : sb.auth.signInWithPassword.bind(sb.auth);
+  const { error } = await fn({ email, password });
+  btn.disabled = false;
+  btn.textContent = isSignup ? 'Create account' : 'Sign in';
+  if (error) { showAuthMsg(error.message, 'error'); return; }
+  if (isSignup) showAuthMsg('Account created! Check your email to confirm.', 'success');
+}
+
+function showAuthMsg(msg, type) {
+  const el = document.getElementById('authMsg');
+  el.textContent = msg; el.className = 'auth-msg ' + type;
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+}
+
+/* ── Cloud save/load ── */
+async function loadPlaylists() {
+  const { data, error } = await sb.from('playlists').select('*').order('created_at');
+  if (error || !data || data.length === 0) {
+    playlists = [{name:'My Feed', items:[]}];
+    await savePlaylists();
+  } else {
+    playlists = data.map(row => ({ id: row.id, name: row.name, items: row.items || [] }));
   }
+  activePl = 0; currentIndex = 0;
+  if (shuffleOn) buildShuffleOrder();
+  renderPlaylistBar(); renderFeed();
+}
 
-  const urlInput    = document.getElementById('urlInput');
-  const playerShell = document.getElementById('playerShell');
-  const emptyState  = document.getElementById('emptyState');
-  const errorMsg    = document.getElementById('errorMsg');
-  const infoStrip   = document.getElementById('infoStrip');
-  const platformTag = document.getElementById('platformTag');
-  const stripUrl    = document.getElementById('stripUrl');
-  const origLink    = document.getElementById('origLink');
+function scheduleSave() {
+  const el = document.getElementById('saveStatus');
+  el.textContent = 'Saving…'; el.className = 'save-status saving';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(savePlaylists, 1200);
+}
 
-  urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadVideo(); });
-
-  function loadVideo() {
-    errorMsg.classList.remove('show');
-    const raw = urlInput.value.trim();
-    if (!raw) { showMainError('Drop a video link in the field above.'); return; }
-    const result = parseMainUrl(raw);
-    if (!result) { showMainError("Couldn't recognise that URL. Try YouTube, Vimeo, Dailymotion, or Twitch."); return; }
-
-    playerShell.querySelectorAll('iframe').forEach(el => el.remove());
-    emptyState.style.display = 'none';
-
-    const iframe = document.createElement('iframe');
-    iframe.src = result.embedUrl;
-    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-    iframe.allowFullscreen = true;
-    playerShell.appendChild(iframe);
-
-    const p = palette[result.platform] || { color: '#aaa', bg: 'rgba(255,255,255,0.07)', border: 'rgba(255,255,255,0.2)' };
-    platformTag.textContent = result.platform;
-    platformTag.style.cssText = `background:${p.bg};border:1px solid ${p.border};color:${p.color};font-family:'Syne Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:0.22rem 0.7rem;border-radius:100px;white-space:nowrap;`;
-    stripUrl.textContent = raw;
-    origLink.href = raw;
-    infoStrip.classList.add('show');
-    playerShell.style.boxShadow = `0 0 0 1px rgba(255,255,255,0.08), 0 40px 100px rgba(0,0,0,0.7), 0 0 60px ${p.color}22`;
-  }
-
-  function showMainError(msg) {
-    errorMsg.textContent = '⚠  ' + msg;
-    errorMsg.classList.remove('show'); void errorMsg.offsetWidth; errorMsg.classList.add('show');
-  }
-
-  /* ── Feed ── */
-  const feedTrack    = document.getElementById('feedTrack');
-  const feedEmpty    = document.getElementById('feedEmpty');
-  const feedDots     = document.getElementById('feedDots');
-  const feedCounter  = document.getElementById('feedCounter');
-  const feedUrlInput = document.getElementById('feedUrlInput');
-  const feedErrorEl  = document.getElementById('feedError');
-  const navUp        = document.getElementById('navUp');
-  const navDown      = document.getElementById('navDown');
-
-  let feedItems = [], currentIndex = 0, feedType = 'yt';
-
-  feedUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') addToFeed(); });
-
-  function setFeedType(type) {
-    feedType = type;
-    document.getElementById('toggleYT').classList.toggle('active', type === 'yt');
-    document.getElementById('toggleTT').classList.toggle('active', type === 'tt');
-    feedUrlInput.placeholder = type === 'yt' ? 'Paste a YouTube Shorts link…' : 'Paste a TikTok video link…';
-  }
-
-  function parseFeedUrl(raw) {
-    raw = raw.trim();
-    if (!raw) return null;
-    try {
-      const url = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
-      const host = url.hostname.replace('www.', '');
-      if (host === 'youtube.com' || host === 'm.youtube.com') {
-        const s = url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
-        if (s) return { platform: 'YT Short', color: '#ff7878', colorBg: 'rgba(255,69,69,0.15)', colorBorder: 'rgba(255,69,69,0.35)', embedUrl: `https://www.youtube-nocookie.com/embed/${s[1]}?autoplay=1&rel=0`, originalUrl: raw };
-        const v = url.searchParams.get('v');
-        if (v) return { platform: 'YouTube', color: '#ff7878', colorBg: 'rgba(255,69,69,0.15)', colorBorder: 'rgba(255,69,69,0.35)', embedUrl: `https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0`, originalUrl: raw };
-      }
-      if (host === 'youtu.be') {
-        const id = url.pathname.slice(1).split('?')[0];
-        if (id) return { platform: 'YT Short', color: '#ff7878', colorBg: 'rgba(255,69,69,0.15)', colorBorder: 'rgba(255,69,69,0.35)', embedUrl: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`, originalUrl: raw };
-      }
-      if (host === 'tiktok.com' || host === 'vm.tiktok.com') {
-        const m = url.pathname.match(/\/video\/(\d+)/);
-        if (m) return { platform: 'TikTok', color: '#ff6b9d', colorBg: 'rgba(255,107,157,0.15)', colorBorder: 'rgba(255,107,157,0.35)', embedUrl: `https://www.tiktok.com/embed/v2/${m[1]}`, originalUrl: raw };
-        return { platform: 'TikTok', color: '#ff6b9d', colorBg: 'rgba(255,107,157,0.15)', colorBorder: 'rgba(255,107,157,0.35)', embedUrl: null, originalUrl: raw, isShortLink: true };
-      }
-      return null;
-    } catch { return null; }
-  }
-
-  function addToFeed() {
-    feedErrorEl.classList.remove('show');
-    const raw = feedUrlInput.value.trim();
-    if (!raw) { showFeedError('Paste a link first.'); return; }
-    const result = parseFeedUrl(raw);
-    if (!result) { showFeedError('Only YouTube Shorts and TikTok links are supported in the feed.'); return; }
-    feedItems.push(result);
-    feedUrlInput.value = '';
-    renderFeed();
-    setTimeout(() => goToSlide(feedItems.length - 1), 60);
-  }
-
-  function removeFromFeed(index) {
-    feedItems.splice(index, 1);
-    currentIndex = Math.min(currentIndex, Math.max(0, feedItems.length - 1));
-    renderFeed();
-    if (feedItems.length > 0) goToSlide(currentIndex);
-  }
-
-  function renderFeed() {
-    feedTrack.querySelectorAll('.feed-slide').forEach(el => el.remove());
-    if (feedItems.length === 0) {
-      feedEmpty.style.display = 'flex';
-      feedDots.innerHTML = ''; feedCounter.textContent = '';
-      updateNavBtns(); return;
+async function savePlaylists() {
+  if (!currentUser) return;
+  const el = document.getElementById('saveStatus');
+  for (const pl of playlists) {
+    if (pl.id) {
+      await sb.from('playlists').update({ name: pl.name, items: pl.items }).eq('id', pl.id);
+    } else {
+      const { data } = await sb.from('playlists').insert({ user_id: currentUser.id, name: pl.name, items: pl.items }).select().single();
+      if (data) pl.id = data.id;
     }
-    feedEmpty.style.display = 'none';
-
-    feedItems.forEach((item, i) => {
-      const slide = document.createElement('div');
-      slide.className = 'feed-slide';
-
-      if (item.isShortLink) {
-        slide.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;padding:2rem;text-align:center;position:relative;z-index:4;">
-          <div style="font-family:'Syne Mono',monospace;font-size:0.75rem;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;">TikTok Short Link</div>
-          <div style="font-size:0.8rem;color:rgba(255,255,255,0.25);max-width:260px;line-height:1.7;font-family:'Syne Mono',monospace;">Use the full TikTok URL:<br>tiktok.com/@user/video/…</div>
-          <a href="${item.originalUrl}" target="_blank" rel="noopener" style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;color:#ff6b9d;text-decoration:none;padding:0.6rem 1.2rem;border:1px solid rgba(255,107,157,0.3);border-radius:8px;background:rgba(255,107,157,0.08);">Open on TikTok ↗</a>
-        </div>`;
-      } else {
-        const iframe = document.createElement('iframe');
-        iframe.src = item.embedUrl;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        iframe.allowFullscreen = true;
-        slide.appendChild(iframe);
-      }
-
-      const overlay = document.createElement('div');
-      overlay.className = 'slide-overlay';
-      overlay.innerHTML = `
-        <span class="slide-badge" style="background:${item.colorBg};border:1px solid ${item.colorBorder};color:${item.color};">${item.platform}</span>
-        <button class="slide-remove" onclick="event.stopPropagation();removeFromFeed(${i})">✕</button>`;
-      slide.appendChild(overlay);
-      feedTrack.appendChild(slide);
-    });
-
-    feedDots.innerHTML = '';
-    feedItems.forEach((_, i) => {
-      const dot = document.createElement('div');
-      dot.className = 'dot' + (i === currentIndex ? ' active' : '');
-      dot.onclick = () => goToSlide(i);
-      feedDots.appendChild(dot);
-    });
-    updateCounter(); updateNavBtns();
   }
+  el.textContent = 'Saved ✓'; el.className = 'save-status saved';
+  setTimeout(() => { el.textContent = ''; el.className = 'save-status'; }, 2000);
+}
 
-  function goToSlide(index) {
-    if (!feedItems.length) return;
-    index = Math.max(0, Math.min(index, feedItems.length - 1));
-    currentIndex = index;
-    const slides = feedTrack.querySelectorAll('.feed-slide');
-    if (slides[index]) slides[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
-    feedDots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === index));
-    updateCounter(); updateNavBtns();
-  }
+/* ── Main player ── */
+const palette = {
+  YouTube:    {color:'#ff7878',bg:'rgba(255,69,69,0.12)',  border:'rgba(255,69,69,0.3)'},
+  'YT Short': {color:'#ff7878',bg:'rgba(255,69,69,0.12)',  border:'rgba(255,69,69,0.3)'},
+  Vimeo:      {color:'#74acff',bg:'rgba(69,145,255,0.12)', border:'rgba(69,145,255,0.3)'},
+  Dailymotion:{color:'#7dffb0',bg:'rgba(85,255,136,0.1)',  border:'rgba(85,255,136,0.25)'},
+  Twitch:     {color:'#bb8cff',bg:'rgba(155,89,255,0.12)', border:'rgba(155,89,255,0.3)'},
+  Facebook:   {color:'#8bbcff',bg:'rgba(69,145,255,0.1)',  border:'rgba(69,145,255,0.25)'},
+  TikTok:     {color:'#ff6b9d',bg:'rgba(255,107,157,0.12)',border:'rgba(255,107,157,0.3)'},
+};
 
-  function scrollFeed(dir) { goToSlide(currentIndex + dir); }
-
-  function updateNavBtns() {
-    navUp.disabled   = currentIndex <= 0 || !feedItems.length;
-    navDown.disabled = currentIndex >= feedItems.length - 1 || !feedItems.length;
-  }
-
-  function updateCounter() {
-    feedCounter.textContent = feedItems.length ? `${currentIndex + 1} / ${feedItems.length}` : '';
-  }
-
-  feedTrack.addEventListener('scroll', () => {
-    const slides = feedTrack.querySelectorAll('.feed-slide');
-    if (!slides.length) return;
-    const trackTop = feedTrack.getBoundingClientRect().top;
-    let closest = 0, minDist = Infinity;
-    slides.forEach((s, i) => {
-      const d = Math.abs(s.getBoundingClientRect().top - trackTop);
-      if (d < minDist) { minDist = d; closest = i; }
-    });
-    if (closest !== currentIndex) {
-      currentIndex = closest;
-      feedDots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === closest));
-      updateCounter(); updateNavBtns();
+function parseMainUrl(raw) {
+  raw=raw.trim(); if(!raw) return null;
+  try {
+    const url=new URL(raw.startsWith('http')?raw:'https://'+raw);
+    const host=url.hostname.replace('www.','');
+    if(host==='youtube.com'||host==='m.youtube.com'){
+      const s=url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/); if(s) return{platform:'YouTube',embedUrl:`https://www.youtube-nocookie.com/embed/${s[1]}?autoplay=1&rel=0`};
+      const v=url.searchParams.get('v'); if(v) return{platform:'YouTube',embedUrl:`https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0`};
     }
-  }, { passive: true });
+    if(host==='youtu.be'){const id=url.pathname.slice(1).split('?')[0];if(id)return{platform:'YouTube',embedUrl:`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`};}
+    if(host==='vimeo.com'||host==='player.vimeo.com'){const m=url.pathname.match(/\/(\d+)/);if(m)return{platform:'Vimeo',embedUrl:`https://player.vimeo.com/video/${m[1]}?autoplay=1`};}
+    if(host==='dailymotion.com'||host==='dai.ly'){let id;const m=url.pathname.match(/\/video\/([a-zA-Z0-9]+)/);if(m)id=m[1];else if(host==='dai.ly')id=url.pathname.slice(1).split('_')[0];if(id)return{platform:'Dailymotion',embedUrl:`https://www.dailymotion.com/embed/video/${id}?autoplay=1`};}
+    if(host==='clips.twitch.tv'){const slug=url.pathname.slice(1);if(slug)return{platform:'Twitch',embedUrl:`https://clips.twitch.tv/embed?clip=${slug}&parent=jtoon711.github.io&autoplay=true`};}
+    if(host==='twitch.tv'){const vod=url.pathname.match(/\/videos\/(\d+)/);if(vod)return{platform:'Twitch',embedUrl:`https://player.twitch.tv/?video=${vod[1]}&parent=jtoon711.github.io&autoplay=true`};const clip=url.pathname.match(/\/clip\/([A-Za-z0-9_-]+)/);if(clip)return{platform:'Twitch',embedUrl:`https://clips.twitch.tv/embed?clip=${clip[1]}&parent=jtoon711.github.io&autoplay=true`};}
+    if(host==='facebook.com'||host==='fb.watch')return{platform:'Facebook',embedUrl:`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(raw)}&show_text=false&autoplay=true`};
+    return null;
+  } catch{return null;}
+}
 
-  function showFeedError(msg) {
-    feedErrorEl.textContent = '⚠  ' + msg;
-    feedErrorEl.classList.remove('show'); void feedErrorEl.offsetWidth; feedErrorEl.classList.add('show');
-  }
+const urlInput=document.getElementById('urlInput'),playerShell=document.getElementById('playerShell'),
+      emptyState=document.getElementById('emptyState'),errorMsg=document.getElementById('errorMsg'),
+      infoStrip=document.getElementById('infoStrip'),platformTag=document.getElementById('platformTag'),
+      stripUrl=document.getElementById('stripUrl'),origLink=document.getElementById('origLink');
 
+urlInput.addEventListener('keydown',e=>{if(e.key==='Enter')loadVideo();});
+
+function loadVideo(){
+  errorMsg.classList.remove('show');
+  const raw=urlInput.value.trim();
+  if(!raw){showMainError('Drop a video link in the field above.');return;}
+  const result=parseMainUrl(raw);
+  if(!result){showMainError("Couldn't recognise that URL.");return;}
+  playerShell.querySelectorAll('iframe').forEach(el=>el.remove());
+  emptyState.style.display='none';
+  const iframe=document.createElement('iframe');
+  iframe.src=result.embedUrl;
+  iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  iframe.allowFullscreen=true;
+  playerShell.appendChild(iframe);
+  const p=palette[result.platform]||{color:'#aaa',bg:'rgba(255,255,255,0.07)',border:'rgba(255,255,255,0.2)'};
+  platformTag.textContent=result.platform;
+  platformTag.style.cssText=`background:${p.bg};border:1px solid ${p.border};color:${p.color};font-family:'Syne Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;padding:0.22rem 0.7rem;border-radius:100px;white-space:nowrap;`;
+  stripUrl.textContent=raw;origLink.href=raw;
+  infoStrip.classList.add('show');
+  playerShell.style.boxShadow=`0 0 0 1px rgba(255,255,255,0.08),0 40px 100px rgba(0,0,0,0.7),0 0 60px ${p.color}22`;
+}
+function showMainError(msg){errorMsg.textContent='⚠  '+msg;errorMsg.classList.remove('show');void errorMsg.offsetWidth;errorMsg.classList.add('show');}
+
+/* ── Feed + Playlists ── */
+const feedTrack   =document.getElementById('feedTrack');
+const feedEmpty   =document.getElementById('feedEmpty');
+const feedDots    =document.getElementById('feedDots');
+const feedCounter =document.getElementById('feedCounter');
+const feedUrlInput=document.getElementById('feedUrlInput');
+const feedErrorEl =document.getElementById('feedError');
+const navUp       =document.getElementById('navUp');
+const navDown     =document.getElementById('navDown');
+const shuffleBtn  =document.getElementById('shuffleBtn');
+const shuffleBadge=document.getElementById('shuffleBadge');
+const playlistBar =document.getElementById('playlistBar');
+const plRenameRow =document.getElementById('plRenameRow');
+const plRenameInput=document.getElementById('plRenameInput');
+
+let playlists=[{name:'My Feed',items:[]}];
+let activePl=0,currentIndex=0,feedType='yt',shuffleOn=false,shuffleOrder=[],renamingIdx=-1;
+
+feedUrlInput.addEventListener('keydown',e=>{if(e.key==='Enter')addToFeed();});
+plRenameInput.addEventListener('keydown',e=>{if(e.key==='Enter')confirmRename();if(e.key==='Escape')cancelRename();});
+
+function setFeedType(type){
+  feedType=type;
+  document.getElementById('toggleYT').classList.toggle('active',type==='yt');
+  document.getElementById('toggleTT').classList.toggle('active',type==='tt');
+  feedUrlInput.placeholder=type==='yt'?'Paste a YouTube Shorts link…':'Paste a TikTok video link…';
+}
+
+function parseFeedUrl(raw){
+  raw=raw.trim();if(!raw)return null;
+  try{
+    const url=new URL(raw.startsWith('http')?raw:'https://'+raw);
+    const host=url.hostname.replace('www.','');
+    if(host==='youtube.com'||host==='m.youtube.com'){
+      const s=url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);
+      if(s)return{platform:'YT Short',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${s[1]}?autoplay=1&rel=0`,originalUrl:raw};
+      const v=url.searchParams.get('v');
+      if(v)return{platform:'YouTube',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0`,originalUrl:raw};
+    }
+    if(host==='youtu.be'){const id=url.pathname.slice(1).split('?')[0];if(id)return{platform:'YT Short',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,originalUrl:raw};}
+    if(host==='tiktok.com'||host==='vm.tiktok.com'){
+      const m=url.pathname.match(/\/video\/(\d+)/);
+      if(m)return{platform:'TikTok',color:'#ff6b9d',colorBg:'rgba(255,107,157,0.15)',colorBorder:'rgba(255,107,157,0.35)',embedUrl:`https://www.tiktok.com/embed/v2/${m[1]}`,originalUrl:raw};
+      return{platform:'TikTok',color:'#ff6b9d',colorBg:'rgba(255,107,157,0.15)',colorBorder:'rgba(255,107,157,0.35)',embedUrl:null,originalUrl:raw,isShortLink:true};
+    }
+    return null;
+  }catch{return null;}
+}
+
+function addToFeed(){
+  feedErrorEl.classList.remove('show');
+  const raw=feedUrlInput.value.trim();
+  if(!raw){showFeedError('Paste a link first.');return;}
+  const result=parseFeedUrl(raw);
+  if(!result){showFeedError('Only YouTube Shorts and TikTok links are supported in the feed.');return;}
+  playlists[activePl].items.push(result);
+  feedUrlInput.value='';
+  if(shuffleOn)buildShuffleOrder();
+  scheduleSave();
   renderFeed();
+  const newIdx=shuffleOn?shuffleOrder.indexOf(playlists[activePl].items.length-1):playlists[activePl].items.length-1;
+  setTimeout(()=>goToSlide(newIdx),60);
+}
+
+function removeFromFeed(itemIdx){
+  playlists[activePl].items.splice(itemIdx,1);
+  currentIndex=Math.min(currentIndex,Math.max(0,visibleItems().length-1));
+  if(shuffleOn)buildShuffleOrder();
+  scheduleSave();
+  renderFeed();
+  if(playlists[activePl].items.length>0)goToSlide(currentIndex);
+}
+
+function toggleShuffle(){
+  shuffleOn=!shuffleOn;
+  shuffleBtn.classList.toggle('active',shuffleOn);
+  shuffleBadge.classList.toggle('show',shuffleOn);
+  if(shuffleOn)buildShuffleOrder();
+  currentIndex=0;renderFeed();goToSlide(0);
+}
+function buildShuffleOrder(){
+  const len=playlists[activePl].items.length;
+  shuffleOrder=Array.from({length:len},(_,i)=>i);
+  for(let i=shuffleOrder.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffleOrder[i],shuffleOrder[j]]=[shuffleOrder[j],shuffleOrder[i]];}
+}
+function visibleItems(){
+  const items=playlists[activePl].items;
+  if(!shuffleOn)return items;
+  return shuffleOrder.slice(0,items.length).map(i=>items[i]);
+}
+
+function renderPlaylistBar(){
+  playlistBar.innerHTML='';
+  playlists.forEach((pl,i)=>{
+    const tab=document.createElement('button');
+    tab.className='pl-tab'+(i===activePl?' active':'');
+    tab.innerHTML=`<span>${pl.name}</span><span class="pl-count">${pl.items.length}</span>`;
+    tab.onclick=()=>switchPlaylist(i);
+    tab.ondblclick=()=>startRename(i);
+    playlistBar.appendChild(tab);
+  });
+  const nb=document.createElement('button');
+  nb.className='pl-new-btn';nb.textContent='+ New playlist';nb.onclick=createPlaylist;
+  playlistBar.appendChild(nb);
+}
+
+function switchPlaylist(i){
+  activePl=i;currentIndex=0;
+  if(shuffleOn)buildShuffleOrder();
+  renderPlaylistBar();renderFeed();goToSlide(0);
+}
+
+async function createPlaylist(){
+  const newPl={name:`Playlist ${playlists.length+1}`,items:[]};
+  if(currentUser){
+    const{data}=await sb.from('playlists').insert({user_id:currentUser.id,name:newPl.name,items:[]}).select().single();
+    if(data)newPl.id=data.id;
+  }
+  playlists.push(newPl);
+  switchPlaylist(playlists.length-1);
+  startRename(activePl);
+}
+
+async function deletePlaylist(){
+  if(playlists.length===1){playlists[0].items=[];scheduleSave();currentIndex=0;renderPlaylistBar();renderFeed();return;}
+  const pl=playlists[activePl];
+  if(pl.id&&currentUser)await sb.from('playlists').delete().eq('id',pl.id);
+  playlists.splice(activePl,1);
+  activePl=Math.max(0,activePl-1);currentIndex=0;
+  if(shuffleOn)buildShuffleOrder();
+  renderPlaylistBar();renderFeed();goToSlide(0);
+}
+
+function startRename(i){
+  renamingIdx=i;
+  plRenameInput.value=playlists[i].name;
+  plRenameRow.classList.add('show');
+  plRenameInput.focus();plRenameInput.select();
+}
+function confirmRename(){
+  const val=plRenameInput.value.trim();
+  if(val&&renamingIdx>=0){playlists[renamingIdx].name=val;scheduleSave();}
+  cancelRename();
+}
+function cancelRename(){
+  plRenameRow.classList.remove('show');renamingIdx=-1;renderPlaylistBar();
+}
+
+function renderFeed(){
+  feedTrack.querySelectorAll('.feed-slide').forEach(el=>el.remove());
+  renderPlaylistBar();
+  const items=visibleItems();
+  if(items.length===0){feedEmpty.style.display='flex';feedDots.innerHTML='';feedCounter.textContent='';updateNavBtns();return;}
+  feedEmpty.style.display='none';
+  items.forEach((item,slideIdx)=>{
+    const realIdx=shuffleOn?shuffleOrder[slideIdx]:slideIdx;
+    const slide=document.createElement('div');slide.className='feed-slide';
+    if(item.isShortLink){
+      slide.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;padding:2rem;text-align:center;z-index:4;">
+        <div style="font-family:'Syne Mono',monospace;font-size:0.75rem;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;">TikTok Short Link</div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.25);max-width:260px;line-height:1.7;font-family:'Syne Mono',monospace;">Use the full TikTok URL:<br>tiktok.com/@user/video/…</div>
+        <a href="${item.originalUrl}" target="_blank" rel="noopener" style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;color:#ff6b9d;text-decoration:none;padding:0.6rem 1.2rem;border:1px solid rgba(255,107,157,0.3);border-radius:8px;background:rgba(255,107,157,0.08);">Open on TikTok ↗</a>
+      </div>`;
+    } else {
+      const iframe=document.createElement('iframe');
+      iframe.src=item.embedUrl;
+      iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.allowFullscreen=true;slide.appendChild(iframe);
+    }
+    const overlay=document.createElement('div');overlay.className='slide-overlay';
+    overlay.innerHTML=`<span class="slide-badge" style="background:${item.colorBg};border:1px solid ${item.colorBorder};color:${item.color};">${item.platform}</span>
+      <button class="slide-remove" onclick="event.stopPropagation();removeFromFeed(${realIdx})">✕</button>`;
+    slide.appendChild(overlay);feedTrack.appendChild(slide);
+  });
+  feedDots.innerHTML='';
+  items.forEach((_,i)=>{
+    const dot=document.createElement('div');dot.className='dot'+(i===currentIndex?' active':'');
+    dot.onclick=()=>goToSlide(i);feedDots.appendChild(dot);
+  });
+  updateCounter();updateNavBtns();
+}
+
+function goToSlide(index){
+  const items=visibleItems();if(!items.length)return;
+  index=Math.max(0,Math.min(index,items.length-1));currentIndex=index;
+  const slides=feedTrack.querySelectorAll('.feed-slide');
+  if(slides[index])slides[index].scrollIntoView({behavior:'smooth',block:'start'});
+  feedDots.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===index));
+  updateCounter();updateNavBtns();
+}
+function scrollFeed(dir){goToSlide(currentIndex+dir);}
+function updateNavBtns(){const len=visibleItems().length;navUp.disabled=currentIndex<=0||!len;navDown.disabled=currentIndex>=len-1||!len;}
+function updateCounter(){const len=visibleItems().length;feedCounter.textContent=len?`${currentIndex+1} / ${len}`:'';  }
+
+feedTrack.addEventListener('scroll',()=>{
+  const slides=feedTrack.querySelectorAll('.feed-slide');if(!slides.length)return;
+  const trackTop=feedTrack.getBoundingClientRect().top;
+  let closest=0,minDist=Infinity;
+  slides.forEach((s,i)=>{const d=Math.abs(s.getBoundingClientRect().top-trackTop);if(d<minDist){minDist=d;closest=i;}});
+  if(closest!==currentIndex){currentIndex=closest;feedDots.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===closest));updateCounter();updateNavBtns();}
+},{passive:true});
+
+function showFeedError(msg){feedErrorEl.textContent='⚠  '+msg;feedErrorEl.classList.remove('show');void feedErrorEl.offsetWidth;feedErrorEl.classList.add('show');}
+
+init();
 </script>
 </body>
 </html>
