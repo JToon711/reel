@@ -206,6 +206,19 @@
     .feed-add-btn:hover { background:rgba(200,255,87,0.18); box-shadow:0 0 20px rgba(200,255,87,0.15); }
     .feed-error { display:none; font-family:'Syne Mono',monospace; font-size:0.7rem; color:#ff8888; padding:0.5rem 0.2rem; margin-top:-0.5rem; margin-bottom:0.6rem; }
     .feed-error.show { display:block; }
+    .rss-bar { display:flex; gap:0.6rem; align-items:center; width:100%; margin-bottom:0.75rem; background:rgba(91,63,255,0.06); border:1px solid rgba(91,63,255,0.2); border-radius:12px; padding:0.75rem 1rem; backdrop-filter:blur(10px); transition:box-shadow 0.3s; }
+    .rss-bar:focus-within { box-shadow:0 0 0 2px rgba(91,63,255,0.25); border-color:rgba(91,63,255,0.4); }
+    .rss-label { font-family:"Syne Mono",monospace; font-size:0.6rem; letter-spacing:0.1em; color:#a78bff; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
+    .rss-input { flex:1; min-width:0; background:transparent; border:none; color:var(--text); font-family:"Syne Mono",monospace; font-size:0.75rem; outline:none; }
+    .rss-input::placeholder { color:var(--muted); }
+    .rss-btn { display:flex; align-items:center; background:rgba(91,63,255,0.15); border:1px solid rgba(91,63,255,0.35); color:#a78bff; font-family:"Syne",sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:0.45rem 0.9rem; border-radius:7px; cursor:pointer; white-space:nowrap; flex-shrink:0; transition:background 0.15s; }
+    .rss-btn:hover { background:rgba(91,63,255,0.25); }
+    .rss-btn:disabled { opacity:0.4; cursor:default; }
+    .rss-msg { display:none; font-family:"Syne Mono",monospace; font-size:0.7rem; padding:0.4rem 0.2rem; margin-top:-0.3rem; margin-bottom:0.5rem; }
+    .rss-msg.show { display:block; }
+    .rss-msg.error { color:#ff8888; }
+    .rss-msg.success { color:#88ffb8; }
+    .rss-msg.loading { color:#a78bff; }
     .feed-viewport { position:relative; width:100%; height:82vh; max-height:700px; border-radius:20px; overflow:hidden; border:1px solid var(--border); box-shadow:0 0 0 1px rgba(255,255,255,0.03) inset,0 40px 80px rgba(0,0,0,0.6); background:#000; }
     .feed-track { width:100%; height:100%; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none; }
     .feed-track::-webkit-scrollbar { display:none; }
@@ -389,6 +402,18 @@
       <button class="shuffle-btn" id="shuffleBtn" onclick="toggleShuffle()">⇄ Shuffle</button>
       <button class="del-pl-btn" onclick="deletePlaylist()">✕ Delete playlist</button>
     </div>
+    <div class="rss-bar">
+      <span class="rss-label">⇩ Channel</span>
+      <input class="rss-input" id="rssInput" placeholder="Paste a YouTube channel URL…" autocomplete="off" spellcheck="false" />
+      <select id="rssCount" style="background:rgba(255,255,255,0.04);border:1px solid rgba(91,63,255,0.25);color:#a78bff;font-family:Syne Mono,monospace;font-size:0.62rem;padding:0.3rem 0.5rem;border-radius:6px;outline:none;">
+        <option value="5">5 videos</option>
+        <option value="10" selected>10 videos</option>
+        <option value="20">20 videos</option>
+        <option value="50">50 videos</option>
+      </select>
+      <button class="rss-btn" id="rssBtn" onclick="importFromChannel()">Import</button>
+    </div>
+    <div class="rss-msg" id="rssMsg"></div>
     <div class="feed-add-bar">
       <div class="feed-type-toggle">
         <button class="toggle-btn active" id="toggleYT" onclick="setFeedType('yt')">YT Short</button>
@@ -760,6 +785,7 @@ const feedTrack=document.getElementById('feedTrack'),feedEmpty=document.getEleme
 
 let playlists=[{name:'My Feed',items:[]}],activePl=0,currentIndex=0,feedType='yt',shuffleOn=false,shuffleOrder=[],renamingIdx=-1;
 
+document.addEventListener("DOMContentLoaded", () => { const ri = document.getElementById("rssInput"); if(ri) ri.addEventListener("keydown", e => { if(e.key==="Enter") importFromChannel(); }); });
 feedUrlInput.addEventListener('keydown',e=>{if(e.key==='Enter')addToFeed();});
 plRenameInput.addEventListener('keydown',e=>{if(e.key==='Enter')confirmRename();if(e.key==='Escape')cancelRename();});
 
@@ -833,6 +859,109 @@ function updateNavBtns(){const len=visibleItems().length;navUp.disabled=currentI
 function updateCounter(){const len=visibleItems().length;feedCounter.textContent=len?`${currentIndex+1} / ${len}`:''; }
 feedTrack.addEventListener('scroll',()=>{const slides=feedTrack.querySelectorAll('.feed-slide');if(!slides.length)return;const trackTop=feedTrack.getBoundingClientRect().top;let closest=0,minDist=Infinity;slides.forEach((s,i)=>{const d=Math.abs(s.getBoundingClientRect().top-trackTop);if(d<minDist){minDist=d;closest=i;}});if(closest!==currentIndex){currentIndex=closest;feedDots.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===closest));updateCounter();updateNavBtns();}},{passive:true});
 function showFeedError(msg){feedErrorEl.textContent='⚠  '+msg;feedErrorEl.classList.remove('show');void feedErrorEl.offsetWidth;feedErrorEl.classList.add('show');}
+
+/* ── RSS Channel Import ── */
+async function importFromChannel() {
+  const raw = document.getElementById('rssInput').value.trim();
+  const count = parseInt(document.getElementById('rssCount').value);
+  const btn = document.getElementById('rssBtn');
+  if (!raw) { showRssMsg('Paste a YouTube channel URL first.', 'error'); return; }
+
+  let channelId = null, handle = null;
+  try {
+    const url = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
+    const path = url.pathname;
+    const cidMatch = path.match(/\/channel\/(UC[A-Za-z0-9_-]+)/);
+    if (cidMatch) channelId = cidMatch[1];
+    const handleMatch = path.match(/\/@([A-Za-z0-9_.-]+)/);
+    if (handleMatch) handle = handleMatch[1];
+    const userMatch = path.match(/\/user\/([A-Za-z0-9_]+)/);
+    if (userMatch) handle = userMatch[1];
+    const cMatch = path.match(/\/c\/([A-Za-z0-9_]+)/);
+    if (cMatch) handle = cMatch[1];
+  } catch {}
+
+  if (!channelId && !handle) { showRssMsg('Could not recognise that channel URL.', 'error'); return; }
+
+  btn.disabled = true;
+  showRssMsg('Fetching channel feed\u2026', 'loading');
+
+  try {
+    let xml = null;
+
+    async function fetchFeed(feedUrl) {
+      const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl);
+      const r = await fetch(proxy);
+      const d = await r.json();
+      return d.contents;
+    }
+
+    if (channelId) {
+      xml = await fetchFeed('https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId);
+    }
+
+    if (!xml || !xml.includes('<entry>')) {
+      if (handle) {
+        xml = await fetchFeed('https://www.youtube.com/feeds/videos.xml?user=' + handle);
+      }
+    }
+
+    if (!xml || !xml.includes('<entry>')) {
+      if (handle) {
+        const pageXml = await fetchFeed('https://www.youtube.com/@' + handle);
+        const idMatch = pageXml && pageXml.match(/"channelId":"(UC[A-Za-z0-9_-]+)"/);
+        if (idMatch) {
+          xml = await fetchFeed('https://www.youtube.com/feeds/videos.xml?channel_id=' + idMatch[1]);
+        }
+      }
+    }
+
+    if (!xml || !xml.includes('<entry>')) {
+      showRssMsg('Could not find videos for that channel.', 'error');
+      btn.disabled = false; return;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const entries = Array.from(doc.querySelectorAll('entry')).slice(0, count);
+
+    if (!entries.length) { showRssMsg('No videos found.', 'error'); btn.disabled = false; return; }
+
+    let added = 0;
+    entries.forEach(function(entry) {
+      const vidEl = entry.querySelector('videoId');
+      const idEl = entry.querySelector('id');
+      const videoId = vidEl ? vidEl.textContent : (idEl ? idEl.textContent.split(':').pop() : null);
+      if (!videoId) return;
+      playlists[activePl].items.push({
+        platform: 'YouTube',
+        color: '#ff7878',
+        colorBg: 'rgba(255,69,69,0.15)',
+        colorBorder: 'rgba(255,69,69,0.35)',
+        embedUrl: 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0',
+        originalUrl: 'https://www.youtube.com/watch?v=' + videoId
+      });
+      added++;
+    });
+
+    if (shuffleOn) buildShuffleOrder();
+    scheduleSave();
+    renderFeed();
+    goToSlide(playlists[activePl].items.length - added);
+    showRssMsg('Added ' + added + ' video' + (added !== 1 ? 's' : '') + ' from channel!', 'success');
+    document.getElementById('rssInput').value = '';
+  } catch(e) {
+    showRssMsg('Failed to fetch \u2014 check the URL and try again.', 'error');
+  }
+  btn.disabled = false;
+}
+
+function showRssMsg(msg, type) {
+  const el = document.getElementById('rssMsg');
+  el.textContent = msg; el.className = 'rss-msg show ' + type;
+  if (type === 'success') setTimeout(function(){ el.className = 'rss-msg'; }, 4000);
+}
+
 
 init();
 </script>
