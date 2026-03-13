@@ -701,7 +701,23 @@ async function loadPlaylists() {
   }
   activePl=0; currentIndex=0;
   if(shuffleOn) buildShuffleOrder();
+  // Refill My Feed with fresh random curated picks every login
+  playlists[0].items = [];
+  const pool2 = [...CURATED_SHORTS];
+  for (let i = pool2.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [pool2[i],pool2[j]] = [pool2[j],pool2[i]];
+  }
+  pool2.slice(0,15).forEach(function(videoId){
+    playlists[0].items.push({
+      platform:'YouTube', color:'#ff7878',
+      colorBg:'rgba(255,69,69,0.15)', colorBorder:'rgba(255,69,69,0.35)',
+      embedUrl:'https://www.youtube-nocookie.com/embed/'+videoId+'?autoplay=0&rel=0',
+      originalUrl:'https://www.youtube.com/shorts/'+videoId
+    });
+  });
   renderPlaylistBar(); renderFeed();
+  setTimeout(function(){ activateSlide(0); }, 100);
 }
 
 function scheduleSave() {
