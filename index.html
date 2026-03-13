@@ -245,6 +245,13 @@
     .feed-empty-text { font-family:'Syne Mono',monospace; font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; }
     .feed-empty-hint { font-size:0.75rem; color:rgba(255,255,255,0.18); text-align:center; max-width:260px; line-height:1.6; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    .wip-banner { position:relative; width:100%; border-radius:20px; overflow:hidden; margin-top:2.5rem; }
+    .wip-overlay { position:absolute; inset:0; z-index:50; background:rgba(180,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2rem; border-radius:20px; border:3px solid #ff3333; }
+    .wip-title { font-size:clamp(1.8rem,5vw,3rem); font-weight:800; color:#fff; letter-spacing:-0.02em; text-align:center; line-height:1.1; }
+    .wip-sub { font-family:'Syne Mono',monospace; font-size:0.85rem; color:rgba(255,255,255,0.75); letter-spacing:0.12em; text-transform:uppercase; text-align:center; }
+    .wip-icon { font-size:3rem; }
+    .games-nav-btn { font-family:'Syne',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:0.5rem 1.2rem; border-radius:100px; border:1px solid rgba(200,255,87,0.4); background:rgba(200,255,87,0.08); color:var(--accent); text-decoration:none; transition:all 0.15s; white-space:nowrap; }
+    .games-nav-btn:hover { background:rgba(200,255,87,0.18); box-shadow:0 0 20px rgba(200,255,87,0.2); }
     @media (max-width:520px) {
       .wordmark { font-size:3.2rem; }
       .input-row { flex-direction:column; }
@@ -297,6 +304,7 @@
       Friends &amp; Chat
       <span class="notif-dot" id="notifDot"></span>
     </button>
+    <a class="games-nav-btn" href="games.html">🎮 Games</a>
     <button class="signout-btn" onclick="signOut()">Sign out</button>
   </div>
 </div>
@@ -385,7 +393,13 @@
     <div class="divider-line"></div><div class="divider-label">Short-Form Feed</div><div class="divider-line"></div>
   </div>
 
-  <div class="feed-section">
+  <div class="wip-banner">
+    <div class="wip-overlay">
+      <div class="wip-icon">🚧</div>
+      <div class="wip-title">In Progress</div>
+      <div class="wip-sub">This feature is coming soon</div>
+    </div>
+  <div class="feed-section" style="visibility:hidden;">
     <div class="feed-header">
       <div class="feed-title-group">
         <div class="feed-title">Shorts &amp; TikToks</div>
@@ -443,6 +457,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </div>
 

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REEL — Games</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Syne+Mono&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080810; --glow: #5b3fff; --glow2: #ff3f8c;
+      --accent: #c8ff57; --text: #eeeef5; --muted: #4a4a65;
+      --surface: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.07);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    .bg-orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.15; animation: drift 18s ease-in-out infinite alternate; }
+    .orb-1 { width: 600px; height: 600px; background: var(--glow); top: -200px; left: -150px; }
+    .orb-2 { width: 500px; height: 500px; background: var(--glow2); bottom: -150px; right: -100px; animation-delay: -6s; }
+    @keyframes drift { from{transform:translate(0,0) scale(1)} to{transform:translate(40px,30px) scale(1.08)} }
+    body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E"); pointer-events:none; z-index:9999; }
+
+    /* Top bar */
+    .top-bar { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.5rem; background:rgba(8,8,16,0.8); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
+    .top-bar-logo { font-size:1.3rem; font-weight:800; letter-spacing:-0.02em; background:linear-gradient(135deg,#fff 30%,#a78bff 70%,var(--glow2) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-decoration:none; }
+    .back-btn { font-family:'Syne Mono',monospace; font-size:0.68rem; letter-spacing:0.07em; padding:0.3rem 0.85rem; border-radius:100px; border:1px solid var(--border); background:transparent; color:var(--muted); text-decoration:none; transition:all 0.15s; }
+    .back-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+
+    /* Layout */
+    .wrap { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:6rem 1.5rem 4rem; }
+
+    /* Header */
+    .page-header { text-align:center; margin-bottom:3rem; animation:fadeUp 0.6s ease both; }
+    .page-title { font-size:clamp(2.5rem,7vw,5rem); font-weight:800; letter-spacing:-0.03em; background:linear-gradient(135deg,#fff 30%,#a78bff 70%,var(--glow2) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; }
+    .page-sub { font-family:'Syne Mono',monospace; font-size:0.7rem; letter-spacing:0.2em; color:var(--muted); text-transform:uppercase; margin-top:0.6rem; }
+
+    /* Category filter */
+    .categories { display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:center; margin-bottom:2.5rem; animation:fadeUp 0.6s 0.1s ease both; }
+    .cat-btn { font-family:'Syne Mono',monospace; font-size:0.65rem; letter-spacing:0.07em; padding:0.38rem 0.9rem; border-radius:100px; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; transition:all 0.15s; }
+    .cat-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+    .cat-btn.active { background:rgba(200,255,87,0.1); border-color:rgba(200,255,87,0.35); color:var(--accent); }
+
+    /* Game grid */
+    .games-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1.2rem; animation:fadeUp 0.6s 0.15s ease both; }
+    .game-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+    .game-card:hover { transform:translateY(-4px); box-shadow:0 20px 60px rgba(0,0,0,0.5); border-color:rgba(255,255,255,0.14); }
+    .game-thumb { width:100%; height:150px; display:flex; align-items:center; justify-content:center; font-size:4rem; position:relative; overflow:hidden; }
+    .game-thumb-bg { position:absolute; inset:0; opacity:0.12; }
+    .game-thumb-emoji { position:relative; z-index:1; filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+    .game-info { padding:1rem 1.1rem 1.1rem; }
+    .game-name { font-size:0.95rem; font-weight:700; letter-spacing:-0.01em; margin-bottom:0.3rem; }
+    .game-desc { font-size:0.75rem; color:var(--muted); line-height:1.55; margin-bottom:0.75rem; }
+    .game-tags { display:flex; gap:0.35rem; flex-wrap:wrap; }
+    .game-tag { font-family:'Syne Mono',monospace; font-size:0.58rem; letter-spacing:0.06em; padding:0.15rem 0.5rem; border-radius:100px; border:1px solid var(--border); color:var(--muted); }
+    .play-game-btn { display:flex; align-items:center; justify-content:center; gap:0.4rem; width:100%; margin-top:0.85rem; background:rgba(200,255,87,0.1); border:1px solid rgba(200,255,87,0.25); color:var(--accent); font-family:'Syne',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:0.55rem; border-radius:8px; cursor:pointer; transition:background 0.15s, box-shadow 0.2s; }
+    .play-game-btn:hover { background:rgba(200,255,87,0.2); box-shadow:0 0 20px rgba(200,255,87,0.15); }
+
+    /* Game modal */
+    .game-modal { position:fixed; inset:0; z-index:500; background:rgba(8,8,16,0.97); display:none; flex-direction:column; }
+    .game-modal.open { display:flex; }
+    .modal-header { display:flex; align-items:center; gap:1rem; padding:0.85rem 1.2rem; border-bottom:1px solid var(--border); flex-shrink:0; background:rgba(8,8,16,0.9); }
+    .modal-close { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--muted); font-size:1rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; flex-shrink:0; }
+    .modal-close:hover { color:#fff; background:rgba(255,69,69,0.2); border-color:rgba(255,69,69,0.4); }
+    .modal-title { font-size:1rem; font-weight:700; }
+    .modal-fullscreen { font-family:'Syne Mono',monospace; font-size:0.62rem; letter-spacing:0.07em; padding:0.28rem 0.75rem; border-radius:100px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; margin-left:auto; }
+    .modal-fullscreen:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+    .modal-frame { flex:1; border:none; width:100%; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @media(max-width:520px) { .games-grid { grid-template-columns:1fr 1fr; } .game-thumb { height:110px; font-size:2.8rem; } }
+  </style>
+</head>
+<body>
+<div class="bg-orbs"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+
+<div class="top-bar">
+  <a class="top-bar-logo" href="index.html">reel</a>
+  <a class="back-btn" href="index.html">← Back to REEL</a>
+</div>
+
+<!-- Game modal -->
+<div class="game-modal" id="gameModal">
+  <div class="modal-header">
+    <button class="modal-close" onclick="closeGame()">✕</button>
+    <span class="modal-title" id="modalTitle"></span>
+    <button class="modal-fullscreen" onclick="fullscreenGame()">⛶ Fullscreen</button>
+  </div>
+  <iframe class="modal-frame" id="gameFrame" allowfullscreen allow="fullscreen"></iframe>
+</div>
+
+<div class="wrap">
+  <div class="page-header">
+    <div class="page-title">Games</div>
+    <div class="page-sub">// Play right in your browser</div>
+  </div>
+
+  <div class="categories" id="categories">
+    <button class="cat-btn active" onclick="filterGames('all',this)">All</button>
+    <button class="cat-btn" onclick="filterGames('arcade',this)">Arcade</button>
+    <button class="cat-btn" onclick="filterGames('puzzle',this)">Puzzle</button>
+    <button class="cat-btn" onclick="filterGames('action',this)">Action</button>
+    <button class="cat-btn" onclick="filterGames('sports',this)">Sports</button>
+    <button class="cat-btn" onclick="filterGames('multiplayer',this)">Multiplayer</button>
+  </div>
+
+  <div class="games-grid" id="gamesGrid"></div>
+</div>
+
+<script>
+const GAMES = [
+  { name:'2048', emoji:'🔢', bg:'#ff9800', desc:'Slide tiles and combine numbers to reach 2048.', tags:['puzzle','strategy'], cat:'puzzle', url:'https://play2048.co/' },
+  { name:'Slope', emoji:'🔵', bg:'#2196f3', desc:'Roll a ball down an endless 3D slope. How far can you go?', tags:['arcade','endless'], cat:'arcade', url:'https://slope-game.github.io/' },
+  { name:'Snake', emoji:'🐍', bg:'#4caf50', desc:'Eat food, grow longer, and avoid hitting yourself.', tags:['arcade','classic'], cat:'arcade', url:'https://www.google.com/fbx?fbx=snake_arcade' },
+  { name:'Tetris', emoji:'🟦', bg:'#9c27b0', desc:'Stack falling blocks and clear lines before the stack reaches the top.', tags:['puzzle','classic'], cat:'puzzle', url:'https://tetris.com/play-tetris' },
+  { name:'Chess', emoji:'♟️', bg:'#795548', desc:'Classic chess against an AI. All skill levels welcome.', tags:['strategy','2 player'], cat:'multiplayer', url:'https://www.chess.com/play/computer' },
+  { name:'1v1.LOL', emoji:'🏗️', bg:'#ff5722', desc:'Build and battle in this fast-paced shooting game.', tags:['action','shooter'], cat:'action', url:'https://1v1.lol' },
+  { name:'Wordle', emoji:'🟩', bg:'#4caf50', desc:'Guess the 5-letter word in 6 tries.', tags:['puzzle','word'], cat:'puzzle', url:'https://www.nytimes.com/games/wordle/index.html' },
+  { name:'Geometry Dash Lite', emoji:'🔷', bg:'#ff5722', desc:'Jump and fly through obstacles in this rhythm-based platformer.', tags:['arcade','rhythm'], cat:'arcade', url:'https://geometrydashonline.github.io/' },
+  { name:'Paper.io 2', emoji:'📄', bg:'#00bcd4', desc:'Expand your territory and eliminate other players.', tags:['action','multiplayer'], cat:'action', url:'https://paper-io.com/' },
+  { name:'Agar.io', emoji:'🫧', bg:'#8bc34a', desc:'Eat smaller cells and grow bigger while avoiding larger ones.', tags:['multiplayer','arcade'], cat:'multiplayer', url:'https://agar.io/' },
+  { name:'Slither.io', emoji:'🐍', bg:'#673ab7', desc:'Grow your snake by eating glowing orbs. Trap others to eliminate them.', tags:['multiplayer','arcade'], cat:'multiplayer', url:'https://slither.io/' },
+  { name:'Moto X3M', emoji:'🏍️', bg:'#ff9800', desc:'Ride through insane obstacle courses on your motorbike.', tags:['action','racing'], cat:'action', url:'https://www.crazygames.com/game/moto-x3m' },
+  { name:'Stickman Hook', emoji:'🕷️', bg:'#e91e63', desc:'Swing through levels like Spiderman using a grappling hook.', tags:['arcade','physics'], cat:'arcade', url:'https://www.crazygames.com/game/stickman-hook' },
+  { name:'Basketball Stars', emoji:'🏀', bg:'#ff5722', desc:'1v1 basketball against a real opponent online.', tags:['sports','multiplayer'], cat:'sports', url:'https://www.crazygames.com/game/basketball-stars' },
+  { name:'Penalty Shootout', emoji:'⚽', bg:'#4caf50', desc:'Score goals and save shots in this penalty shootout game.', tags:['sports','soccer'], cat:'sports', url:'https://www.crazygames.com/game/penalty-shootout-multi-league' },
+  { name:'Temple Run 2', emoji:'🏃', bg:'#795548', desc:'Run, jump and slide to escape the cursed temple.', tags:['arcade','endless'], cat:'arcade', url:'https://poki.com/en/g/temple-run-2' },
+  { name:'Crossy Road', emoji:'🐔', bg:'#ffeb3b', desc:'Cross busy roads and rivers without getting squished.', tags:['arcade','casual'], cat:'arcade', url:'https://poki.com/en/g/crossy-road' },
+  { name:'Krunker.io', emoji:'🎯', bg:'#f44336', desc:'Fast-paced first-person shooter right in your browser.', tags:['action','fps'], cat:'action', url:'https://krunker.io/' },
+  { name:'Smash Karts', emoji:'🏎️', bg:'#ff9800', desc:'Drive karts and blast opponents with weapons to win.', tags:['multiplayer','racing'], cat:'multiplayer', url:'https://smashkarts.io/' },
+  { name:'Skribbl.io', emoji:'🎨', bg:'#2196f3', desc:'Draw and guess words with friends in this online Pictionary.', tags:['multiplayer','casual'], cat:'multiplayer', url:'https://skribbl.io/' },
+  { name:'Dino Game', emoji:'🦕', bg:'#607d8b', desc:"Chrome's offline dinosaur game. Jump over cacti and pterodactyls.", tags:['arcade','endless'], cat:'arcade', url:'https://chromedino.com/' },
+  { name:'Sudoku', emoji:'🔢', bg:'#3f51b5', desc:'Fill the 9×9 grid so every row, column and box has 1–9.', tags:['puzzle','logic'], cat:'puzzle', url:'https://sudoku.com/' },
+  { name:'Drift Hunters', emoji:'🚗', bg:'#f44336', desc:'Drift your way through tracks and earn points for style.', tags:['racing','action'], cat:'action', url:'https://www.crazygames.com/game/drift-hunters' },
+  { name:'Shell Shockers', emoji:'🥚', bg:'#ffeb3b', desc:'Egg-based multiplayer shooter. Crack your enemies!', tags:['action','multiplayer'], cat:'action', url:'https://shellshock.io/' },
+];
+
+let currentFilter = 'all';
+
+function filterGames(cat, btn) {
+  currentFilter = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGames();
+}
+
+function renderGames() {
+  const grid = document.getElementById('gamesGrid');
+  const filtered = currentFilter === 'all' ? GAMES : GAMES.filter(g => g.cat === currentFilter);
+  grid.innerHTML = '';
+  filtered.forEach(function(game) {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.innerHTML = `
+      <div class="game-thumb">
+        <div class="game-thumb-bg" style="background:${game.bg};"></div>
+        <span class="game-thumb-emoji">${game.emoji}</span>
+      </div>
+      <div class="game-info">
+        <div class="game-name">${game.name}</div>
+        <div class="game-desc">${game.desc}</div>
+        <div class="game-tags">${game.tags.map(t=>`<span class="game-tag">${t}</span>`).join('')}</div>
+        <button class="play-game-btn" onclick="openGame('${game.url}','${game.name.replace(/'/g,"\\'")}')">
+          ▶ Play Now
+        </button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function openGame(url, name) {
+  document.getElementById('modalTitle').textContent = name;
+  document.getElementById('gameFrame').src = url;
+  document.getElementById('gameModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGame() {
+  document.getElementById('gameModal').classList.remove('open');
+  document.getElementById('gameFrame').src = '';
+  document.body.style.overflow = '';
+}
+
+function fullscreenGame() {
+  const frame = document.getElementById('gameFrame');
+  if (frame.requestFullscreen) frame.requestFullscreen();
+  else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+}
+
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGame(); });
+
+renderGames();
+</script>
+</body>
+</html>
