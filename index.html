@@ -481,8 +481,8 @@ function onSignedOut() {
   document.getElementById('authOverlay').classList.remove('hidden');
   document.getElementById('topBar').style.display = 'none';
   playlists = [{name:'My Feed',items:[]}]; activePl = 0; currentIndex = 0;
-  renderPlaylistBar(); renderFeed();
   loadCuratedFeed();
+  renderPlaylistBar(); renderFeed();
 }
 
 function switchAuthTab(tab) {
@@ -1055,8 +1055,6 @@ function loadCuratedFeed() {
     });
   });
   scheduleSave();
-  renderFeed();
-  activateSlide(0);
 }
 
 
