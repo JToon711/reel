@@ -482,6 +482,7 @@ function onSignedOut() {
   document.getElementById('topBar').style.display = 'none';
   playlists = [{name:'My Feed',items:[]}]; activePl = 0; currentIndex = 0;
   renderPlaylistBar(); renderFeed();
+  loadCuratedFeed();
 }
 
 function switchAuthTab(tab) {
@@ -1000,6 +1001,61 @@ function showRssMsg(msg, type) {
   const el = document.getElementById('rssMsg');
   el.textContent = msg; el.className = 'rss-msg show ' + type;
   if (type === 'success') setTimeout(function(){ el.className = 'rss-msg'; }, 4000);
+}
+
+
+/* ── Curated Shorts Pool ── */
+const CURATED_SHORTS = [
+  // Funny / Comedy
+  'n1e3z7WZGSM','qXa6NHBMjCQ','7bXMOOZ6Vek','jQ-YMODNc2g','nYGFWFhLSeU',
+  'WxfFNfRgBrY','vLAXqyZvGKg','3JZ4pnNtyxQ','oLdvp2TDJhU','4yd5mewkKmo',
+  'r7LnRBIBGg0','K3JaEHmKG44','VGAhpLCJEes','oc8GHnXLSZc','MFBxFjK84uk',
+  // Gaming
+  'dQw4w9WgXcQ','mWRsgZuwf_8','tgbNymZ7vqY','Zi_XLOBDo_Y','9bZkp7q19f0',
+  'kJQP7kiw5Fk','OPf0YbXqDm0','jNQXAC9IVRw','2vjPBrBU-TM','ePyFJ7qp62w',
+  // Sports
+  'RgKAFK5djSk','pRpeEdMmmQ0','QcIy9NiNbmo','l482T0yNkeo','CevxZvSJLk8',
+  'YqeW9_5kURI','fRh_vgS2dFE','09R8_2nJtjg','wZZ7oFKsKzY','KQ6zr6kCPj8',
+  // Animals / Nature
+  'hT_nvWreIhg','hHW1oY26kxQ','oHg5SJYRHA0','kffacxfA7G4','nfWlot6h_JM',
+  '5qap5aO4i9A','60ItHLz5WEA','ZbZSe6N_BXs','bNyHD5GHKhY','dHRmq5fVGp4',
+  // Art / Satisfying
+  'IcrbM1l_BoI','M7lc1UVf-VE','watch?v=fLexgOxsZu0','e-ORhEE9VVg','YykjpeuMNEk',
+  'gQlMMD8auMs','BBJa32lAvP0','YR5ApYxkU-U','lAIGb1VC9Rc','dHe_GDMeOwg',
+  // Music / Dance
+  'ru0K8uYEZWw','1G4isv_Fylg','WPni755-Krg','OPf0YbXqDm0','jZhQOvn9Fno',
+  'oavMtUWDBTM','pSlVNPfeT-g','hpIPMSdFqX0','2Vv-BfVoq4g','gCYcHz2k5x0',
+  // Life hacks / Skills
+  'l1dnqKGuezo','vA1yEVWyIRI','GNTHMlbMOCQ','KxGRhd_iWuE','9LfmrkyP81M',
+  '2MRdtBBhFIM','CIHWQxIfWdk','pPvd8UulOJg','TlV-zvbRiPs','jHAn_T27aJQ',
+  // More funny
+  'ZZ5LpwO-An4','rTgj1HxmUbg','a9__D53WsUs','6Dh-GyWxaHs','kffacxfA7G4',
+  'YBHQbu5IDgY','VGAhpLCJEes','hpIPMSdFqX0','Zi_XLOBDo_Y','4yd5mewkKmo',
+];
+
+function loadCuratedFeed() {
+  if (!currentUser) return;
+  // Only auto-load if the active playlist is empty
+  if (playlists[activePl].items.length > 0) return;
+  // Shuffle the pool and pick 15
+  const pool = [...CURATED_SHORTS];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const picks = pool.slice(0, 15);
+  picks.forEach(function(videoId) {
+    playlists[activePl].items.push({
+      platform: 'YouTube',
+      color: '#ff7878',
+      colorBg: 'rgba(255,69,69,0.15)',
+      colorBorder: 'rgba(255,69,69,0.35)',
+      embedUrl: 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=0&rel=0',
+      originalUrl: 'https://www.youtube.com/shorts/' + videoId
+    });
+  });
+  renderFeed();
+  activateSlide(0);
 }
 
 
