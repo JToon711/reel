@@ -404,7 +404,7 @@
     </div>
     <div class="rss-bar">
       <span class="rss-label">⇩ Channel</span>
-      <input class="rss-input" id="rssInput" placeholder="Paste a YouTube channel URL…" autocomplete="off" spellcheck="false" />
+      <input class="rss-input" id="rssInput" placeholder="Paste a YouTube channel URL (Shorts only)…" autocomplete="off" spellcheck="false" />
       <select id="rssCount" style="background:rgba(255,255,255,0.04);border:1px solid rgba(91,63,255,0.25);color:#a78bff;font-family:Syne Mono,monospace;font-size:0.62rem;padding:0.3rem 0.5rem;border-radius:6px;outline:none;">
         <option value="5">5 videos</option>
         <option value="10" selected>10 videos</option>
@@ -796,8 +796,8 @@ function parseFeedUrl(raw){
   try{
     const url=new URL(raw.startsWith('http')?raw:'https://'+raw);
     const host=url.hostname.replace('www.','');
-    if(host==='youtube.com'||host==='m.youtube.com'){const s=url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);if(s)return{platform:'YT Short',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${s[1]}?autoplay=1&rel=0`,originalUrl:raw};const v=url.searchParams.get('v');if(v)return{platform:'YouTube',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${v}?autoplay=1&rel=0`,originalUrl:raw};}
-    if(host==='youtu.be'){const id=url.pathname.slice(1).split('?')[0];if(id)return{platform:'YT Short',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,originalUrl:raw};}
+    if(host==='youtube.com'||host==='m.youtube.com'){const s=url.pathname.match(/\/shorts\/([A-Za-z0-9_-]+)/);if(s)return{platform:'YT Short',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${s[1]}?autoplay=0&rel=0`,originalUrl:raw};const v=url.searchParams.get('v');if(v)return{platform:'YouTube',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${v}?autoplay=0&rel=0`,originalUrl:raw};}
+    if(host==='youtu.be'){const id=url.pathname.slice(1).split('?')[0];if(id)return{platform:'YT Short',color:'#ff7878',colorBg:'rgba(255,69,69,0.15)',colorBorder:'rgba(255,69,69,0.35)',embedUrl:`https://www.youtube-nocookie.com/embed/${id}?autoplay=0&rel=0`,originalUrl:raw};}
     if(host==='tiktok.com'||host==='vm.tiktok.com'){const m=url.pathname.match(/\/video\/(\d+)/);if(m)return{platform:'TikTok',color:'#ff6b9d',colorBg:'rgba(255,107,157,0.15)',colorBorder:'rgba(255,107,157,0.35)',embedUrl:`https://www.tiktok.com/embed/v2/${m[1]}`,originalUrl:raw};return{platform:'TikTok',color:'#ff6b9d',colorBg:'rgba(255,107,157,0.15)',colorBorder:'rgba(255,107,157,0.35)',embedUrl:null,originalUrl:raw,isShortLink:true};}
     return null;
   }catch{return null;}
@@ -853,11 +853,12 @@ function renderFeed(){
   items.forEach((_,i)=>{const dot=document.createElement('div');dot.className='dot'+(i===currentIndex?' active':'');dot.onclick=()=>goToSlide(i);feedDots.appendChild(dot);});
   updateCounter();updateNavBtns();
 }
-function goToSlide(index){const items=visibleItems();if(!items.length)return;index=Math.max(0,Math.min(index,items.length-1));currentIndex=index;const slides=feedTrack.querySelectorAll('.feed-slide');if(slides[index])slides[index].scrollIntoView({behavior:'smooth',block:'start'});feedDots.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===index));updateCounter();updateNavBtns();}
+function goToSlide(index){const items=visibleItems();if(!items.length)return;index=Math.max(0,Math.min(index,items.length-1));currentIndex=index;const slides=feedTrack.querySelectorAll('.feed-slide');if(slides[index])slides[index].scrollIntoView({behavior:'smooth',block:'start'});feedDots.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===index));updateCounter();updateNavBtns();activateSlide(index);}
+function activateSlide(index){const slides=feedTrack.querySelectorAll('.feed-slide');slides.forEach((slide,i)=>{const iframe=slide.querySelector('iframe');if(!iframe)return;const src=iframe.src;if(i===index){if(src.includes('autoplay=0'))iframe.src=src.replace('autoplay=0','autoplay=1');}else{if(src.includes('autoplay=1'))iframe.src=src.replace('autoplay=1','autoplay=0');}});}
 function scrollFeed(dir){goToSlide(currentIndex+dir);}
 function updateNavBtns(){const len=visibleItems().length;navUp.disabled=currentIndex<=0||!len;navDown.disabled=currentIndex>=len-1||!len;}
 function updateCounter(){const len=visibleItems().length;feedCounter.textContent=len?`${currentIndex+1} / ${len}`:''; }
-feedTrack.addEventListener('scroll',()=>{const slides=feedTrack.querySelectorAll('.feed-slide');if(!slides.length)return;const trackTop=feedTrack.getBoundingClientRect().top;let closest=0,minDist=Infinity;slides.forEach((s,i)=>{const d=Math.abs(s.getBoundingClientRect().top-trackTop);if(d<minDist){minDist=d;closest=i;}});if(closest!==currentIndex){currentIndex=closest;feedDots.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===closest));updateCounter();updateNavBtns();}},{passive:true});
+feedTrack.addEventListener('scroll',()=>{const slides=feedTrack.querySelectorAll('.feed-slide');if(!slides.length)return;const trackTop=feedTrack.getBoundingClientRect().top;let closest=0,minDist=Infinity;slides.forEach((s,i)=>{const d=Math.abs(s.getBoundingClientRect().top-trackTop);if(d<minDist){minDist=d;closest=i;}});if(closest!==currentIndex){currentIndex=closest;feedDots.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===closest));updateCounter();updateNavBtns();activateSlide(closest);}},{passive:true});
 function showFeedError(msg){feedErrorEl.textContent='⚠  '+msg;feedErrorEl.classList.remove('show');void feedErrorEl.offsetWidth;feedErrorEl.classList.add('show');}
 
 /* ── RSS Channel Import ── */
@@ -909,9 +910,28 @@ async function importFromChannel() {
 
   try {
     let xml = null;
+    let shortsIds = null;
+
+    // First try to scrape Shorts page to get Shorts-only video IDs
+    async function getShortsIds(channelUrl) {
+      const page = await tryProxy(channelUrl + '/shorts');
+      if (!page) return null;
+      const ids = [];
+      const re = /"videoId":"([A-Za-z0-9_-]{11})"/g;
+      let m;
+      while ((m = re.exec(page)) !== null) {
+        if (!ids.includes(m[1])) ids.push(m[1]);
+      }
+      return ids.length ? ids : null;
+    }
+
+    if (handle) {
+      shortsIds = await getShortsIds('https://www.youtube.com/@' + handle);
+    }
 
     // Try direct channel ID feed first
     if (channelId) {
+      if (!shortsIds) shortsIds = await getShortsIds('https://www.youtube.com/channel/' + channelId);
       xml = await tryProxy('https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId);
     }
 
@@ -923,7 +943,7 @@ async function importFromChannel() {
     // Try resolving @handle via YouTube page to get channel ID
     if ((!xml || !xml.includes('<entry>')) && handle) {
       showRssMsg('Resolving channel handle…', 'loading');
-      const page = await tryProxy('https://www.youtube.com/@' + handle + '/videos');
+      const page = await tryProxy('https://www.youtube.com/@' + handle + '/shorts');
       if (page) {
         const m = page.match(/"channelId":"(UC[A-Za-z0-9_-]+)"/);
         if (m) {
@@ -948,13 +968,15 @@ async function importFromChannel() {
       const idEl = entry.querySelector('id');
       const videoId = vidEl ? vidEl.textContent : (idEl ? idEl.textContent.split(':').pop() : null);
       if (!videoId || videoId.length < 5) return;
+      // If we have a shorts list, only include videos that appear on the /shorts page
+      if (shortsIds && !shortsIds.includes(videoId)) return;
       playlists[activePl].items.push({
         platform: 'YouTube',
         color: '#ff7878',
         colorBg: 'rgba(255,69,69,0.15)',
         colorBorder: 'rgba(255,69,69,0.35)',
-        embedUrl: 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0',
-        originalUrl: 'https://www.youtube.com/watch?v=' + videoId
+        embedUrl: 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=0&rel=0',
+        originalUrl: 'https://www.youtube.com/shorts/' + videoId
       });
       added++;
     });
